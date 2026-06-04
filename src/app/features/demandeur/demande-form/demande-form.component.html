@@ -1,0 +1,142 @@
+<form class="demande-form demandeur-form" (ngSubmit)="creerDemande.emit()">
+  <div class="form-hero">
+    <div>
+      <p class="eyebrow">Nouvelle operation</p>
+      <h3>Creer une demande</h3>
+    </div>
+    <span class="form-progress">{{ lignes.length }}/{{ maxLignes }} lignes</span>
+  </div>
+
+  <div class="form-section">
+    <div class="section-heading">
+      <span>1</span>
+      <div>
+        <h4>Informations generales</h4>
+        <p>Definis le trajet, le type et les ressources associees.</p>
+      </div>
+    </div>
+
+    <div class="form-grid">
+      <label class="wide-field">
+      Libelle
+        <input type="text" name="libelle" placeholder="Ex: Transfert stock Site SKO" [(ngModel)]="nouvelleDemande.libelle" />
+      </label>
+
+      <label>
+      Capacite
+        <input type="number" name="capacite" min="1" [(ngModel)]="nouvelleDemande.capacite" />
+      </label>
+
+      <!--<label>
+      Type
+       <select name="typeTransaction" [(ngModel)]="nouvelleDemande.typeTransaction">
+          <option value="SORTIE">SORTIE</option> -->
+          <!-- <option value="ENTREE">ENTREE</option> -->
+         <!-- </select>
+        </label>!-->
+
+      <label>
+      Site depart
+        <select name="siteDepartId" [(ngModel)]="nouvelleDemande.siteDepartId">
+          <option [ngValue]="null">Choisir</option>
+          <option *ngFor="let site of sites" [ngValue]="site.id">
+            {{ site.libelle || site.codeSite || site.id }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+      Site arrivee
+        <select name="siteArriveeId" [(ngModel)]="nouvelleDemande.siteArriveeId">
+          <option [ngValue]="null">Choisir</option>
+          <option *ngFor="let site of sites" [ngValue]="site.id">
+            {{ site.libelle || site.codeSite || site.id }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+      Camion
+        <select name="camionId" [(ngModel)]="nouvelleDemande.camionId">
+          <option [ngValue]="null">Choisir</option>
+          <option *ngFor="let camion of camions" [ngValue]="camion.id">
+            {{ camion.immatriculation || camion.id }}
+          </option>
+        </select>
+      </label>
+
+      <label>
+      Fournisseur
+        <select name="fournisseurId" [(ngModel)]="nouvelleDemande.fournisseurId">
+          <option [ngValue]="null">Choisir</option>
+          <option *ngFor="let fournisseur of fournisseurs" [ngValue]="fournisseur.id">
+            {{ fournisseur.nom || fournisseur.id }}
+          </option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <div class="lignes-header">
+      <div class="section-heading">
+        <span>2</span>
+        <div>
+          <h4>Articles demandes</h4>
+          <p>Ajoute les articles et quantites a transporter.</p>
+        </div>
+      </div>
+      <button type="button" (click)="addLigne.emit()" [disabled]="lignes.length >= maxLignes">
+        Ajouter ligne
+      </button>
+    </div>
+
+    <p *ngIf="formDataMessage" class="muted">{{ formDataMessage }}</p>
+
+    <div class="ligne" *ngFor="let ligne of lignes; let i = index">
+      <span class="line-index">{{ i + 1 }}</span>
+
+      <select
+        [name]="'articleId' + i"
+        [(ngModel)]="ligne.articleId"
+        (ngModelChange)="onLigneChange.emit(ligne)"
+      >
+        <option [ngValue]="null">Article</option>
+        <option *ngIf="articles.length === 0" [ngValue]="null" disabled>
+          Aucun article charge
+        </option>
+        <option *ngFor="let article of articles" [ngValue]="article.id">
+          {{ getArticleLabel(article) }}
+        </option>
+      </select>
+
+      <input
+        type="number"
+        min="1"
+        [max]="ligne.type === 'SORTIE' ? getArticleStock(getSelectedArticle(ligne.articleId)) : null"
+        [name]="'quantite' + i"
+        [(ngModel)]="ligne.quantite"
+        (ngModelChange)="onLigneChange.emit(ligne)"
+      />
+
+      <select [name]="'type' + i" [(ngModel)]="ligne.type" (ngModelChange)="onLigneChange.emit(ligne)">
+        <option value="SORTIE">SORTIE</option>
+        <option value="ENTREE">ENTREE</option>
+      </select>
+
+      <button type="button" class="danger icon-button" (click)="removeLigne.emit(i)" *ngIf="lignes.length > 1">
+        X
+      </button>
+
+      <small class="stock-info" *ngIf="getSelectedArticle(ligne.articleId) as article">
+        Disponible: {{ getArticleStock(article) }} {{ getArticleUnit(article) }}
+      </small>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="success submit-button" [disabled]="isCreating">
+      {{ isCreating ? 'Creation...' : 'Creer demande' }}
+    </button>
+  </div>
+</form>

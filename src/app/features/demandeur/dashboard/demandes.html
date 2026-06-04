@@ -1,0 +1,82 @@
+<section class="demandes-shell">
+  <aside class="demandes-sidebar">
+    <div class="side-brand">
+      <span>D</span>
+      <div>
+        <strong>Demandes</strong>
+        <small>{{ role }}</small>
+      </div>
+    </div>
+
+    <nav class="side-nav" aria-label="Navigation demandes">
+      <a *ngIf="role === 'DEMANDEUR'" href="/demandes#nouvelle-demande">Nouvelle demande</a>
+      <a *ngIf="role === 'DEMANDEUR'" href="/demandes#mes-demandes">Mes demandes</a>
+      <a *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'" href="/demandes#file-validation">File validation</a>
+      <a *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'" href="/demandes#demandes-validees">Demandes validees</a>
+      <a *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'" href="/demandes#demandes-rejetees">Demandes rejetees</a>
+    </nav>
+
+    <button type="button" class="side-logout" (click)="logout()">Deconnexion</button>
+  </aside>
+
+  <main class="demandes-main">
+    <header class="demandes-header">
+      <div>
+        <p class="eyebrow">{{ role }}</p>
+        <h2>{{ role === 'DEMANDEUR' ? 'Mes demandes' : 'Demandes en attente' }}</h2>
+      </div>
+      <button type="button" (click)="logout()">Deconnexion</button>
+    </header>
+
+    <p *ngIf="errorMessage" class="alert">{{ errorMessage }}</p>
+    <p *ngIf="successMessage" class="success-message">{{ successMessage }}</p>
+
+    <app-demande-form
+      id="nouvelle-demande"
+      *ngIf="role === 'DEMANDEUR'"
+      [formDataMessage]="formDataMessage"
+      [sites]="sites"
+      [camions]="camions"
+      [fournisseurs]="fournisseurs"
+      [articles]="articles"
+      [nouvelleDemande]="nouvelleDemande"
+      [lignes]="lignes"
+      [maxLignes]="maxLignes"
+      [isCreating]="isCreating"
+      [getArticleLabel]="getArticleLabelFn"
+      [getSelectedArticle]="getSelectedArticleFn"
+      [getArticleStock]="getArticleStockFn"
+      [getArticleUnit]="getArticleUnitFn"
+      (creerDemande)="creerDemande()"
+      (addLigne)="addLigne()"
+      (removeLigne)="removeLigne($event)"
+      (onLigneChange)="onLigneChange($event)"
+    ></app-demande-form>
+
+    <p *ngIf="isLoading && demandes.length === 0" class="muted">Chargement... {{ loadingEndpoint }}</p>
+
+    <app-demande-list
+      id="mes-demandes"
+      [role]="role"
+      [demandes]="demandes"
+      [demandesTraitees]="demandesTraitees"
+      [demandesValidees]="demandesValidees"
+      [demandesRejetees]="demandesRejetees"
+      [isLoading]="isLoading"
+      [isLoadingTraitees]="isLoadingTraitees"
+      [processingDemandeId]="processingDemandeId"
+      [motifRejet]="motifRejet"
+      [getDemandeurLabel]="getDemandeurLabelFn"
+      [getDateCreation]="getDateCreationFn"
+      [getSiteLabel]="getSiteLabelFn"
+      [getCamionLabel]="getCamionLabelFn"
+      [getFournisseurLabel]="getFournisseurLabelFn"
+      [getLigneArticleLabel]="getLigneArticleLabelFn"
+      [getMotifRejet]="getMotifRejetFn"
+      [getValidateurLabel]="getValidateurLabelFn"
+      (valider)="valider($event)"
+      (rejeter)="rejeter($event)"
+      (refreshDemandes)="refreshDemandes()"
+    ></app-demande-list>
+  </main>
+</section>

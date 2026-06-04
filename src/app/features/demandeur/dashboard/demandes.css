@@ -1,0 +1,66 @@
+app-demandes{display:block;min-height:100vh;background:#f5f7fb;color:#111827;font-family:Arial,sans-serif}
+.demandes-shell{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
+.demandes-sidebar{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:22px;padding:22px 18px;background:#111827;color:#f8fafc}
+.side-brand{display:flex;align-items:center;gap:11px;padding:7px}
+.side-brand span{width:38px;height:38px;display:grid;place-items:center;border-radius:8px;background:#2563eb;color:#fff;font-weight:800}
+.side-brand strong,.side-brand small{display:block}
+.side-brand small{margin-top:3px;color:#94a3b8;font-size:12px}
+.side-nav{display:grid;gap:7px}
+.side-nav a,.side-logout{border:0;border-radius:8px;padding:11px 12px;background:transparent;color:#cbd5e1;font:inherit;font-weight:800;text-align:left;text-decoration:none;cursor:pointer}
+.side-nav a:hover{background:#1f2937;color:#fff}
+.side-logout{margin-top:auto;border:1px solid #334155}
+.demandes-main{min-width:0;padding:22px 18px}
+.demandes-header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+.demandes-header h2{margin:4px 0 0;color:#111827;font-size:26px}
+.eyebrow{margin:0;color:#64748b;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0}
+.alert,.success-message,.empty,.muted{border-radius:8px;padding:11px 13px}
+.alert{color:#991b1b;background:#fff1f2;border:1px solid #fecdd3}
+.success-message{color:#166534;background:#f0fdf4;border:1px solid #bbf7d0}
+.muted,.empty{color:#475569;background:#fff;border:1px solid #e2e8f0}
+.validator-panel,.demandeur-panel,.demande-form,.demande-card{border:1px solid #dbe3ef;border-radius:8px;background:#fff}
+.validator-panel,.demandeur-panel{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;margin-bottom:14px}
+.demande-form{display:grid;gap:14px;padding:18px 20px;margin-bottom:16px}
+.form-hero{display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid #edf2f7;padding-bottom:12px}
+.form-hero h3{margin:3px 0 0;font-size:21px;color:#111827}
+.form-progress{border-radius:999px;background:#e8eef8;color:#1e3a8a;padding:6px 11px;font-size:12px;font-weight:800}
+.form-section{display:grid;gap:10px}
+.section-heading{display:flex;align-items:center;gap:10px}
+.section-heading span{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#2563eb;color:#fff;font-weight:800}
+.section-heading h4{margin:0;color:#111827;font-size:15px}
+.section-heading p{margin:2px 0 0;color:#64748b;font-size:12px}
+.form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 12px}
+.wide-field{grid-column:span 2}
+label{display:grid;gap:5px;color:#334155;font-size:12px;font-weight:800}
+input,select{width:100%;min-width:0;border:1px solid #cbd5e1;border-radius:7px;padding:9px 11px;background:#fff;color:#111827;font-size:14px;outline:none}
+input:focus,select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.14)}
+.lignes-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ligne{display:grid;grid-template-columns:36px minmax(220px,1fr)110px 120px 42px;gap:10px;align-items:start;border:1px solid #edf2f7;border-radius:8px;background:#f8fafc;padding:9px 10px}
+.line-index{width:28px;height:36px;display:grid;place-items:center;border-radius:7px;background:#e8eef8;color:#1e3a8a;font-weight:800}
+.stock-info{grid-column:2/-1;justify-self:start;border-radius:999px;background:#eef6f1;color:#166534;padding:5px 10px;font-size:12px;font-weight:800}
+.form-actions{display:flex;justify-content:flex-end;border-top:1px solid #edf2f7;padding-top:12px}
+.submit-button{min-width:160px}
+.demandes-list{display:grid;gap:12px}
+.demande-card{padding:16px}
+.validator-card,.demandeur-card{display:grid;gap:13px}
+.demande-main{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.demande-main strong{color:#111827;font-size:16px}
+.demande-main span{border-radius:999px;background:#e8eef8;color:#1e3a8a;padding:5px 10px;font-size:12px;font-weight:800}
+.validator-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;border-top:1px solid #edf2f7;border-bottom:1px solid #edf2f7;padding:13px 0}
+.validator-grid div{display:grid;gap:4px}
+.validator-grid small,.line-review h4{color:#64748b;font-size:12px;font-weight:800;text-transform:uppercase}
+.validator-grid strong{color:#1f2937;font-size:14px}
+.line-review{display:grid;gap:8px}
+.line-review h4{margin:0}
+.line-row{display:grid;grid-template-columns:minmax(180px,1fr)auto auto;gap:10px;align-items:center;border-radius:7px;background:#f8fafc;border:1px solid #edf2f7;padding:10px 12px}
+.line-row span{color:#1f2937}
+.line-row em{border-radius:999px;background:#f1f5f9;color:#475569;padding:4px 9px;font-size:12px;font-style:normal;font-weight:800}
+.demande-details{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;color:#475569}
+.demande-details span{border-radius:7px;background:#f8fafc;border:1px solid #edf2f7;padding:7px 9px}
+.actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+.validator-card .actions{display:grid;grid-template-columns:auto minmax(260px,1fr)auto;align-items:center;margin-top:0}
+button{border:0;border-radius:7px;padding:10px 14px;background:#1e293b;color:#fff;font-weight:800;cursor:pointer}
+button.success{background:#15803d}
+button.danger{background:#b91c1c}
+.icon-button{width:38px;height:38px;padding:0}
+button:disabled{opacity:.6;cursor:not-allowed}
+@media(max-width:900px){.demandes-shell{grid-template-columns:1fr}.demandes-sidebar{position:static;height:auto}.side-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.demandes-header,.validator-panel,.demandeur-panel,.lignes-header,.form-hero{align-items:stretch;flex-direction:column}.form-grid,.ligne,.validator-card .actions,.line-row{grid-template-columns:1fr}.wide-field{grid-column:auto}.stock-info{grid-column:1/-1}.form-actions{justify-content:stretch}.submit-button{width:100%}}

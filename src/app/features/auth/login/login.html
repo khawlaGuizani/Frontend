@@ -1,0 +1,61 @@
+<section class="login-shell">
+  <div class="login-layout">
+    <aside class="login-info">
+      <a class="brand" routerLink="/">
+        <span>T</span>
+        <strong>Transport</strong>
+      </a>
+
+      <div class="info-copy">
+        <p class="eyebrow">Plateforme transport</p>
+        <h1>Connexion</h1>
+        <p>
+          Accede a ton espace pour creer, suivre ou valider les demandes de transport.
+        </p>
+      </div>
+
+      <div class="info-grid">
+        <span>Demandes</span>
+        <span>Articles</span>
+        <span>Camions</span>
+      </div>
+    </aside>
+
+    <form class="login-card" (ngSubmit)="login()">
+      <div class="login-header">
+        <p class="eyebrow">Transport App</p>
+        <h2>Se connecter</h2>
+      </div>
+
+      <label class="form-group">
+        <span>Adresse email</span>
+        <input
+          class="form-input"
+          name="email"
+          type="email"
+          placeholder="admin@transport.tn"
+          autocomplete="email"
+          [(ngModel)]="user.email"
+        />
+      </label>
+
+      <label class="form-group">
+        <span>Mot de passe</span>
+        <input
+          class="form-input"
+          name="motDePasse"
+          type="password"
+          placeholder="Mot de passe"
+          autocomplete="current-password"
+          [(ngModel)]="user.motDePasse"
+        />
+      </label>
+
+      <p *ngIf="errorMessage" class="error-message">{{ errorMessage }}</p>
+
+      <button class="btn-login" type="submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Connexion...' : 'Se connecter' }}
+      </button>
+    </form>
+  </div>
+</section>
