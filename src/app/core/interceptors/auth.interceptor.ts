@@ -19,19 +19,19 @@ export const authInterceptor: HttpInterceptorFn = (
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> => {
 
-  
+
   if (!req.url.includes('/api/')) {
   return next(req);
 }
 
-  
+
   if (PUBLIC_AUTH_ROUTES.some(route => req.url.includes(route))) {
     return next(req);
   }
 
   const token = localStorage.getItem(TOKEN_KEY);
 
-  
+
   if (!token) {
     return next(req);
   }
