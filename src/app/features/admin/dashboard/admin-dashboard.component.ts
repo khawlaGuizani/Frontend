@@ -29,36 +29,40 @@ type AdminSection = 'users' | 'articles' | 'typesCamion' | 'camions' | 'fourniss
     <section class="admin-shell">
       <aside class="admin-sidebar">
         <div class="brand-block">
-          <span class="brand-mark">T</span>
+          <span class="brand-mark">↗</span>
           <div>
-            <strong>Transport</strong>
-            <small>Administration</small>
+            <strong>TransitFlow</strong>
+            <small>Logistics platform</small>
           </div>
         </div>
 
         <nav class="admin-nav" aria-label="Navigation administration">
-          <button type="button" [class.active]="activeSection === 'users'" (click)="activeSection = 'users'">Utilisateurs</button>
-          <button type="button" [class.active]="activeSection === 'articles'" (click)="activeSection = 'articles'">Articles</button>
-          <button type="button" [class.active]="activeSection === 'typesCamion'" (click)="activeSection = 'typesCamion'">Types camion</button>
-          <button type="button" [class.active]="activeSection === 'camions'" (click)="activeSection = 'camions'">Camions</button>
-          <button type="button" [class.active]="activeSection === 'fournisseurs'" (click)="activeSection = 'fournisseurs'">Fournisseurs</button>
-          <button type="button" [class.active]="activeSection === 'sites'" (click)="activeSection = 'sites'">Sites</button>
+          <button type="button" [class.active]="activeSection === 'users'" (click)="activeSection = 'users'"><i>♙</i> Utilisateurs</button>
+          <button type="button" [class.active]="activeSection === 'articles'" (click)="activeSection = 'articles'"><i>▦</i> Articles</button>
+          <button type="button" [class.active]="activeSection === 'typesCamion'" (click)="activeSection = 'typesCamion'"><i>◇</i> Types camion</button>
+          <button type="button" [class.active]="activeSection === 'camions'" (click)="activeSection = 'camions'"><i>▰</i> Camions</button>
+          <button type="button" [class.active]="activeSection === 'fournisseurs'" (click)="activeSection = 'fournisseurs'"><i>◉</i> Fournisseurs</button>
+          <button type="button" [class.active]="activeSection === 'sites'" (click)="activeSection = 'sites'"><i>⌖</i> Sites</button>
         </nav>
 
-        <button class="logout-button" type="button" (click)="logout()">Deconnexion</button>
+        <button class="logout-button" type="button" (click)="logout()">⇥ Déconnexion</button>
       </aside>
 
       <main class="admin-main">
         <header class="admin-topbar">
           <div>
-            <p class="eyebrow">Administration</p>
-            <h1>Tableau de bord</h1>
+            <p class="eyebrow">Administration / Vue d'ensemble</p>
+            <h1>Centre de pilotage</h1>
           </div>
 
-          <div class="quick-stats">
+          <div class="topbar-actions">
+            <button class="notification-button" type="button" aria-label="Notifications">◌</button>
+            <div class="admin-avatar">A</div>
+            <div class="quick-stats">
             <span>{{ usersCount }} utilisateurs</span>
             <span>{{ articlesCount }} articles</span>
             <span>{{ camionsCount }} camions</span>
+            </div>
           </div>
         </header>
 

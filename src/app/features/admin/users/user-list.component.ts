@@ -23,16 +23,16 @@ import { FormsModule } from '@angular/forms';
       <div class="table-wrap" *ngIf="!isLoading">
         <table>
           <thead>
-            <tr><th>ID</th><th>Nom</th><th>Email</th><th>Role</th><th>Actions</th></tr>
+            <tr><th>Collaborateur</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Actions</th></tr>
           </thead>
           <tbody>
             <tr *ngFor="let u of users; trackBy: trackByUserId">
-              <td>#{{ u.id }}</td>
-              <td>{{ u.nom }}</td>
+              <td><span class="user-avatar">{{ u.nom?.charAt(0) || 'U' }}</span><strong>{{ u.nom }}</strong><small class="user-id">#{{ u.id }}</small></td>
               <td>{{ u.email }}</td>
               <td><span class="role-badge">{{ u.role }}</span></td>
+              <td><span class="status-badge">Actif</span></td>
               <td class="actions-cell">
-                <button class="secondary-button" type="button" (click)="edit.emit(u)">Modifier</button>
+                <button class="secondary-button icon-action" type="button" (click)="edit.emit(u)">✎ <span>Modifier</span></button>
                 <button class="danger-button" type="button" (click)="remove.emit(u.id)" [disabled]="deletingUserId === u.id">
                   {{ deletingUserId === u.id ? 'Suppression...' : 'Supprimer' }}
                 </button>

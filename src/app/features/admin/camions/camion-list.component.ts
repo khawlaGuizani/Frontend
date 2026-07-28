@@ -6,11 +6,14 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="panel list-panel">
+    <section class="panel list-panel resource-cards">
       <div class="list-row" *ngFor="let c of camions">
-        <div>
+        <div class="resource-info">
+          <span class="resource-icon truck-icon">▰</span>
+          <div>
           <strong>{{ c.immatriculation }}</strong>
-          <span>{{ c.capaciteReelle || c.capacite_reelle || c.capacite }} - {{ c.disponible ? 'Disponible' : 'Indisponible' }}</span>
+          <span>{{ c.capaciteReelle || c.capacite_reelle || c.capacite }} · <b [class.unavailable]="!c.disponible">{{ c.disponible ? 'Disponible' : 'Indisponible' }}</b></span>
+          </div>
         </div>
         <div class="action-row">
           <button class="secondary-button" type="button" (click)="edit.emit(c)">Modifier</button>

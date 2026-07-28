@@ -1,26 +1,15 @@
-<h2>Creer un utilisateur</h2>
-
-<form (ngSubmit)="createUser()">
-  <input name="nom" placeholder="Nom" [(ngModel)]="user.nom" />
-  <br /><br />
-
-  <input name="email" placeholder="Email" [(ngModel)]="user.email" />
-  <br /><br />
-
-  <input
-    name="motDePasse"
-    type="password"
-    placeholder="Mot de passe"
-    [(ngModel)]="user.motDePasse"
-  />
-  <br /><br />
-
-  <select name="role" [(ngModel)]="user.role">
-    <option value="ADMIN">ADMIN</option>
-    <option value="DEMANDEUR">DEMANDEUR</option>
-    <option value="VALIDATEUR">VALIDATEUR</option>
-  </select>
-  <br /><br />
-
-  <button type="submit">S'inscrire</button>
-</form>
+<main class="register-shell">
+  <section class="register-card">
+    <header class="register-header">
+      <p class="eyebrow">Administration</p>
+      <h2 class="register-title">Créer un utilisateur</h2>
+      <p class="register-subtitle">Ajoutez un nouvel accès à la plateforme logistique.</p>
+    </header>
+    <form class="register-form" (ngSubmit)="createUser()">
+      <div class="form-row single"><label class="form-group"><span class="form-label">Nom complet</span><input class="form-input" name="nom" placeholder="Ex. Amine Ben Salem" [(ngModel)]="user.nom" /></label></div>
+      <div class="form-row"><label class="form-group"><span class="form-label">Adresse email</span><input class="form-input" name="email" type="email" placeholder="nom@entreprise.tn" [(ngModel)]="user.email" /></label><label class="form-group"><span class="form-label">Rôle</span><select class="form-select" name="role" [(ngModel)]="user.role"><option value="ADMIN">Administrateur</option><option value="DEMANDEUR">Demandeur</option><option value="VALIDATEUR">Validateur</option></select></label></div>
+      <div class="form-row single"><label class="form-group"><span class="form-label">Mot de passe</span><input class="form-input" name="motDePasse" type="password" placeholder="Définir un mot de passe sécurisé" [(ngModel)]="user.motDePasse" /></label></div>
+      <div class="register-actions"><button class="btn-register" type="submit">Créer le compte</button></div>
+    </form>
+  </section>
+</main>

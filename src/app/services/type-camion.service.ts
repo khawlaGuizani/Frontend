@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { apiUrl } from '../core/config/api.config';
 
 @Injectable({ providedIn: 'root' })
 export class TypeCamionService {
-  private api = 'http://localhost:8081/api/type-camions';
+  private api = apiUrl('/type-camions');
 
   constructor(private http: HttpClient) {}
 

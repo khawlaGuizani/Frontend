@@ -1,0 +1,75 @@
+rules:
+  - id: angular-innerhtml-binding
+    languages: [typescript, html]
+    severity: WARNING
+    message: >-
+      [innerHTML] binding or direct DOM innerHTML assignment can lead to
+      XSS if the bound value contains unsanitized user input. Prefer
+      Angular's built-in interpolation/property binding, or sanitize via
+      DomSanitizer explicitly when raw HTML is genuinely required.
+    patterns:
+      - pattern-either:
+          - pattern: $EL.nativeElement.innerHTML = $VAL
+          - pattern: $EL.innerHTML = $VAL
+    metadata:
+      cwe: "CWE-79: Cross-site Scripting"
+      owasp: "A03:2021 - Injection"
+
+  - id: angular-bypass-security-trust
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      DomSanitizer.bypassSecurityTrust*() disables Angular's built-in XSS
+      protection for this value. Only use it for genuinely trusted,
+      non-user-controlled content, and document why here.
+    patterns:
+      - pattern-either:
+          - pattern: $SANITIZER.bypassSecurityTrustHtml(...)
+          - pattern: $SANITIZER.bypassSecurityTrustScript(...)
+          - pattern: $SANITIZER.bypassSecurityTrustUrl(...)
+          - pattern: $SANITIZER.bypassSecurityTrustResourceUrl(...)
+    metadata:
+      cwe: "CWE-79: Cross-site Scripting"
+
+  - id: angular-http-hardcoded-url
+    languages: [typescript]
+    severity: INFO
+    message: >-
+      A hardcoded absolute URL was found in an HTTP call. Prefer building
+      requests from environment.apiUrl (or a proxy config for local dev)
+      so the frontend targets the correct backend per environment.
+    patterns:
+      - pattern-either:
+          - pattern: this.http.get("http://...")
+          - pattern: this.http.post("http://...", ...)
+    metadata:
+      owasp: "A05:2021 - Security Misconfiguration"
+
+  - id: js-eval-usage
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      eval() (or the Function constructor) executes arbitrary code built
+      from a string — a major injection/RCE vector in the browser context.
+      Avoid it entirely.
+    patterns:
+      - pattern-either:
+          - pattern: eval(...)
+          - pattern: new Function(...)
+    metadata:
+      cwe: "CWE-95: Eval Injection"
+
+  - id: hardcoded-secret-in-ts
+    languages: [typescript]
+    severity: WARNING
+    message: >-
+      A variable/property named like a secret is assigned a hardcoded
+      string literal. Frontend code is fully visible to end users —
+      never embed real secrets/API keys here; call the backend instead.
+    patterns:
+      - pattern-regex: '(?i)(password|secret|apikey|api_key|token)\s*[:=]\s*[''"][^''"$]{6,}[''"]'
+    paths:
+      exclude:
+        - "**/*.spec.ts"
+    metadata:
+      cwe: "CWE-798: Use of Hard-coded Credentials"

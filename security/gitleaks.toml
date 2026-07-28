@@ -1,0 +1,41 @@
+title = "gitleaks config - Frontend (Angular / transport-frontend)"
+
+[extend]
+useDefault = true
+
+# ---------------------------------------------------------------------------
+# Project-specific rules
+# ---------------------------------------------------------------------------
+
+[[rules]]
+id = "angular-environment-api-key"
+description = "API key/token hardcoded in an Angular environment file"
+regex = '''(?i)(apiKey|api_key|apiToken|secret|clientSecret)\s*:\s*['"][A-Za-z0-9\-_]{16,}['"]'''
+path = '''environment.*\.ts$'''
+tags = ["angular", "config"]
+
+[[rules]]
+id = "jwt-token-literal"
+description = "A JWT-looking token hardcoded in source (should come from a login response, never be a literal)"
+regex = '''eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}'''
+tags = ["jwt", "secret"]
+
+# ---------------------------------------------------------------------------
+# Allowlist
+# ---------------------------------------------------------------------------
+[allowlist]
+description = "Global allowlist"
+paths = [
+  '''(?i)\.git/''',
+  '''node_modules/''',
+  '''dist/''',
+  '''\.angular/''',
+  '''coverage/''',
+  '''package-lock\.json''',
+]
+
+regexes = [
+  '''\$\{[A-Z_][A-Z0-9_]*\}''',
+  '''CHANGE_ME''',
+  '''your-.*-here''',
+]
