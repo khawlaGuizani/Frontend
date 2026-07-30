@@ -22,9 +22,12 @@ RUN rm -rf /usr/share/nginx/html/* \
 
 COPY --from=build /build/dist/transport-frontend/browser /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker-start.sh /docker-start.sh
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
     && chown -R appuser:appgroup /usr/share/nginx/html /var/cache/nginx /var/run \
+    && chown appuser:appgroup /etc/nginx/conf.d/default.conf \
+    && chmod +x /docker-start.sh \
     && touch /var/run/nginx.pid \
     && chown appuser:appgroup /var/run/nginx.pid
 
@@ -35,4 +38,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD wget -qO- http://127.0.0.1:8080/healthz || exit 1
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/docker-start.sh"]
