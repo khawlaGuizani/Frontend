@@ -1,31 +1,11 @@
 <section class="demandes-shell">
-  <aside class="demandes-sidebar">
-    <div class="side-brand">
-      <span>D</span>
-      <div>
-        <strong>Demandes</strong>
-        <small>{{ role }}</small>
-      </div>
-    </div>
-
-    <nav class="side-nav" aria-label="Navigation demandes">
-      <a *ngIf="role === 'DEMANDEUR'" href="/demandes#nouvelle-demande">Nouvelle demande</a>
-      <a *ngIf="role === 'DEMANDEUR'" href="/demandes#mes-demandes">Mes demandes</a>
-      <a *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'" href="/demandes#file-validation">File validation</a>
-      <a *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'" href="/demandes#demandes-validees">Demandes validees</a>
-      <a *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'" href="/demandes#demandes-rejetees">Demandes rejetees</a>
-    </nav>
-
-    <button type="button" class="side-logout" (click)="logout()">Deconnexion</button>
-  </aside>
-
   <main class="demandes-main">
     <header class="demandes-header">
       <div>
-        <p class="eyebrow">{{ role }}</p>
-        <h2>{{ role === 'DEMANDEUR' ? 'Mes demandes' : 'Demandes en attente' }}</h2>
+        <p class="eyebrow">{{ role }} · Opérations transport</p>
+        <h2>{{ activeView === 'create' ? 'Créer une demande' : activeView === 'validation' ? 'File de validation' : activeView === 'history' ? 'Historique des décisions' : role === 'DEMANDEUR' ? 'Mes demandes' : 'Demandes de transport' }}</h2>
       </div>
-      <button type="button" (click)="logout()">Deconnexion</button>
+      <button class="secondary-button" type="button" (click)="refreshDemandes()">Actualiser</button>
     </header>
 
     <p *ngIf="errorMessage" class="alert">{{ errorMessage }}</p>
@@ -33,7 +13,7 @@
 
     <app-demande-form
       id="nouvelle-demande"
-      *ngIf="role === 'DEMANDEUR'"
+      *ngIf="role === 'DEMANDEUR' && activeView === 'create'"
       [formDataMessage]="formDataMessage"
       [sites]="sites"
       [camions]="camions"
@@ -53,11 +33,13 @@
       (onLigneChange)="onLigneChange($event)"
     ></app-demande-form>
 
-    <p *ngIf="isLoading && demandes.length === 0" class="muted">Chargement... {{ loadingEndpoint }}</p>
+    <p *ngIf="isLoading && demandes.length === 0 && activeView !== 'create'" class="muted">Chargement... {{ loadingEndpoint }}</p>
 
     <app-demande-list
       id="mes-demandes"
+      *ngIf="activeView !== 'create'"
       [role]="role"
+      [view]="activeView"
       [demandes]="demandes"
       [demandesTraitees]="demandesTraitees"
       [demandesValidees]="demandesValidees"

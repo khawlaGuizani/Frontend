@@ -14,7 +14,7 @@ import { TypeCamionListComponent } from './type-camion-list.component';
     <section class="workspace">
       <div class="section-title">
         <div><p class="eyebrow">Configuration</p><h2>Types camion</h2></div>
-        <span class="count-pill">{{ typesCamion.length }} types</span>
+        <button class="secondary-button" type="button" (click)="loadTypesCamion()">Actualiser</button>
       </div>
       <app-type-camion-form [typeCamion]="typeCamion" [selectedTypeCamion]="selectedTypeCamion" [isSubmitting]="isSubmitting" (save)="selectedTypeCamion ? saveTypeCamion() : addTypeCamion()" (cancel)="cancelTypeCamionEdit()"></app-type-camion-form>
       <app-type-camion-list [typesCamion]="typesCamion" (edit)="editTypeCamion($event)" (remove)="deleteTypeCamion($event)"></app-type-camion-list>

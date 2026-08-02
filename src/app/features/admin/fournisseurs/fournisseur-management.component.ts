@@ -14,7 +14,7 @@ import { FournisseurListComponent } from './fournisseur-list.component';
     <section class="workspace">
       <div class="section-title">
         <div><p class="eyebrow">Partenaires</p><h2>Fournisseurs</h2></div>
-        <span class="count-pill">{{ fournisseurs.length }} fournisseurs</span>
+        <button class="secondary-button" type="button" (click)="loadFournisseurs()">Actualiser</button>
       </div>
       <app-fournisseur-form [fournisseur]="fournisseur" [selectedFournisseur]="selectedFournisseur" [isSubmitting]="isSubmitting" (save)="selectedFournisseur ? saveFournisseur() : addFournisseur()" (cancel)="cancelFournisseurEdit()"></app-fournisseur-form>
       <app-fournisseur-list [fournisseurs]="fournisseurs" (edit)="editFournisseur($event)" (remove)="deleteFournisseur($event)"></app-fournisseur-list>

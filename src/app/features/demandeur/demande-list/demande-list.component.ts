@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { UserRole } from '../../../models/user.model';
 
@@ -9,7 +9,8 @@ import { UserRole } from '../../../models/user.model';
   imports: [CommonModule, FormsModule],
   templateUrl: './demande-list.component.html'
 })
-export class DemandeListComponent {
+export class DemandeListComponent implements OnChanges {
+  @Input() view: 'create' | 'requests' | 'validation' | 'history' = 'requests';
   @Input() role: UserRole | null = null;
   @Input() demandes: any[] = [];
   @Input() demandesTraitees: any[] = [];
@@ -32,4 +33,24 @@ export class DemandeListComponent {
   @Output() valider = new EventEmitter<number>();
   @Output() rejeter = new EventEmitter<number>();
   @Output() refreshDemandes = new EventEmitter<void>();
+
+  validationTab: 'pending' | 'approved' | 'rejected' = 'pending';
+
+  get displayedDemandes(): any[] {
+    if (this.view === 'requests') return this.demandes;
+    if (this.validationTab === 'approved') return this.demandesValidees;
+    if (this.validationTab === 'rejected') return this.demandesRejetees;
+    return this.demandes;
+  }
+
+  get isValidator(): boolean { return this.role === 'VALIDATEUR' || this.role === 'ADMIN'; }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['view'] && this.view === 'history') this.validationTab = 'approved';
+  }
+
+  statusClass(demande: any): string {
+    const status = demande?.statut || demande?.status || 'EN_ATTENTE';
+    return status === 'VALIDE' ? 'is-approved' : status === 'REJETE' ? 'is-rejected' : 'is-pending';
+  }
 }

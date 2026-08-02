@@ -14,7 +14,7 @@ import { ArticleListComponent } from './article-list.component';
     <section class="workspace">
       <div class="section-title">
         <div><p class="eyebrow">Stock</p><h2>Gestion des articles</h2></div>
-        <span class="count-pill">{{ articles.length }} articles</span>
+        <button class="secondary-button" type="button" (click)="loadArticles()">Actualiser</button>
       </div>
       <app-article-form [article]="article" [selectedArticle]="selectedArticle" [isSubmitting]="isSubmitting" (save)="selectedArticle ? saveArticle() : addArticle()" (cancel)="cancelArticleEdit()"></app-article-form>
       <app-article-list [articles]="articles" (edit)="editArticle($event)" (remove)="deleteArticle($event)"></app-article-list>

@@ -83,11 +83,11 @@ export class AuthService {
 
   getDashboardRoute(role: UserRole | null = this.getRole()): string {
     if (role === 'ADMIN') {
-      return '/admin';
+      return '/dashboard/users';
     }
 
     if (role === 'DEMANDEUR' || role === 'VALIDATEUR') {
-      return '/demandes';
+      return '/dashboard/requests';
     }
 
     return '/login';

@@ -14,7 +14,7 @@ import { SiteListComponent } from './site-list.component';
     <section class="workspace">
       <div class="section-title">
         <div><p class="eyebrow">Reseau</p><h2>Sites</h2></div>
-        <span class="count-pill">{{ sites.length }} sites</span>
+        <button class="secondary-button" type="button" (click)="loadSites()">Actualiser</button>
       </div>
       <app-site-form [site]="site" [selectedSite]="selectedSite" [isSubmitting]="isSubmitting" (save)="selectedSite ? saveSite() : addSite()" (cancel)="cancelSiteEdit()"></app-site-form>
       <app-site-list [sites]="sites" (edit)="editSite($event)" (remove)="deleteSite($event)"></app-site-list>

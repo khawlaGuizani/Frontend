@@ -1,30 +1,37 @@
 <section class="login-shell">
   <div class="login-layout">
     <aside class="login-info">
+      <div class="login-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
       <a class="brand" routerLink="/">
-        <span>T</span>
-        <strong>Transport</strong>
+        <img class="brand-mark" src="/brand/doetker-logo.png" alt="Dr. Oetker" />
       </a>
 
       <div class="info-copy">
-        <p class="eyebrow">Plateforme transport</p>
-        <h1>Connexion</h1>
+        <p class="eyebrow">Portail opérations</p>
+        <h1>Votre espace logistique</h1>
         <p>
-          Accede a ton espace pour creer, suivre ou valider les demandes de transport.
+          Pilotez les demandes, validations et ressources de logistique depuis un espace sécurisé et unifié.
         </p>
       </div>
 
+      <div class="platform-status">
+        <span class="status-pulse" aria-hidden="true"></span>
+        <span>Système opérationnel</span>
+        <small>Accès interne</small>
+      </div>
+
       <div class="info-grid">
-        <span>Demandes</span>
-        <span>Articles</span>
-        <span>Camions</span>
+        <span><b>✓</b> Demandes</span>
+        <span><b>✓</b> Validation</span>
+        <span><b>✓</b> Flotte</span>
       </div>
     </aside>
 
     <form class="login-card" (ngSubmit)="login()">
       <div class="login-header">
-        <p class="eyebrow">Transport App</p>
-        <h2>Se connecter</h2>
+        <p class="eyebrow">Accès sécurisé</p>
+        <h2>Bienvenue</h2>
+        <span class="login-subtitle">Connectez-vous à votre espace TransitFlow.</span>
       </div>
 
       <label class="form-group">
@@ -33,7 +40,7 @@
           class="form-input"
           name="email"
           type="email"
-          placeholder="admin@transport.tn"
+          placeholder="nom@doetker.com"
           autocomplete="email"
           [(ngModel)]="user.email"
         />
@@ -56,6 +63,8 @@
       <button class="btn-login" type="submit" [disabled]="isSubmitting">
         {{ isSubmitting ? 'Connexion...' : 'Se connecter' }}
       </button>
+
+      <p class="login-footer">Plateforme interne Dr. Oetker · GIAS</p>
     </form>
   </div>
 </section>

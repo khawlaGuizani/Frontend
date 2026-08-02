@@ -1,272 +1,37 @@
-<section id="file-validation" class="validator-panel" *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'">
-  <div>
-    <p class="eyebrow">File de validation</p>
-    <h3>{{ demandes.length }} demande{{ demandes.length > 1 ? 's' : '' }} en attente</h3>
+<section class="request-toolbar" *ngIf="isValidator && view !== 'requests'">
+  <div class="request-tabs" role="tablist" aria-label="Statut des demandes">
+    <button type="button" [class.active]="validationTab === 'pending'" (click)="validationTab = 'pending'" role="tab">À valider <span>{{ demandes.length }}</span></button>
+    <button type="button" [class.active]="validationTab === 'approved'" (click)="validationTab = 'approved'" role="tab">Validées <span>{{ demandesValidees.length }}</span></button>
+    <button type="button" [class.active]="validationTab === 'rejected'" (click)="validationTab = 'rejected'" role="tab">Rejetées <span>{{ demandesRejetees.length }}</span></button>
   </div>
-  <button type="button" (click)="refreshDemandes.emit()">
-    Actualiser
-  </button>
 </section>
 
-
-<div *ngIf="!isLoading && demandes.length === 0" class="empty">
-  Aucune demande a afficher.
-</div>
-
-<section class="demandeur-panel" *ngIf="role === 'DEMANDEUR' && demandes.length">
-  <div>
-    <p class="eyebrow">Suivi</p>
-    <h3>{{ demandes.length }} demande{{ demandes.length > 1 ? 's' : '' }}</h3>
-  </div>
-  <button type="button" (click)="refreshDemandes.emit()">Actualiser</button>
+<div class="loading-state" *ngIf="isLoading && displayedDemandes.length === 0">Chargement des demandes…</div>
+<section class="empty-request" *ngIf="!isLoading && displayedDemandes.length === 0">
+  <span>◌</span><h3>Aucune demande à afficher</h3><p>Les nouvelles demandes de transport apparaîtront ici.</p>
 </section>
 
-<div class="demandes-list" *ngIf="demandes.length">
-  <article
-    class="demande-card"
-    [class.validator-card]="role === 'VALIDATEUR' || role === 'ADMIN'"
-    [class.demandeur-card]="role === 'DEMANDEUR'"
-    *ngFor="let d of demandes"
-  >
-    <div class="demande-main">
-      <strong>Demande #{{ d.id }}</strong>
-      <span>{{ d.statut || d.status || 'EN_ATTENTE' }}</span>
+<section class="demandes-list" *ngIf="displayedDemandes.length">
+  <article class="demande-card modern-request-card" *ngFor="let d of displayedDemandes">
+    <div class="request-card-head">
+      <div><p>Demande #{{ d.id }}</p><strong>{{ d.libelle || 'Transport interne' }}</strong></div>
+      <span class="request-status" [class]="statusClass(d)">{{ d.statut || d.status || 'EN_ATTENTE' }}</span>
     </div>
-
-    <div class="validator-grid" *ngIf="role === 'DEMANDEUR'">
-      <div>
-        <small>Creation</small>
-        <strong>{{ getDateCreation(d) | date: 'short' }}</strong>
-      </div>
-      <div>
-        <small>Depart</small>
-        <strong>{{ getSiteLabel(d.siteDepart, d.siteDepartId || d['site_depart_id']) }}</strong>
-      </div>
-      <div>
-        <small>Arrivee</small>
-        <strong>{{ getSiteLabel(d.siteArrivee, d.siteArriveeId || d['site_arrivee_id']) }}</strong>
-      </div>
-      <div>
-        <small>Camion</small>
-        <strong>{{ getCamionLabel(d) }}</strong>
-      </div>
-      <div>
-        <small>Fournisseur</small>
-        <strong>{{ getFournisseurLabel(d) }}</strong>
-      </div>
-      <div>
-        <small>Capacite</small>
-        <strong>{{ d.capacite || '-' }}</strong>
-      </div>
-      <div *ngIf="(d.statut === 'VALIDE' || d.status === 'VALIDE') && (d.dateValidation || d['date_validation'])">
-        <small>Validation</small>
-        <strong>{{ d.dateValidation || d['date_validation'] | date: 'short' }}</strong>
-      </div>
-      <div *ngIf="d.statut === 'REJETE' || d.status === 'REJETE'">
-        <small>Motif rejet</small>
-        <strong>{{ getMotifRejet(d) }}</strong>
-      </div>
+    <div class="route-summary">
+      <div><small>Départ</small><strong>{{ getSiteLabel(d.siteDepart, d.siteDepartId || d['site_depart_id']) }}</strong></div>
+      <span aria-hidden="true">→</span>
+      <div><small>Arrivée</small><strong>{{ getSiteLabel(d.siteArrivee, d.siteArriveeId || d['site_arrivee_id']) }}</strong></div>
     </div>
-
-    <div class="validator-grid" *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'">
-      <div>
-        <small>Demandeur</small>
-        <strong>{{ getDemandeurLabel(d) }}</strong>
-      </div>
-      <div>
-        <small>Creation</small>
-        <strong>{{ getDateCreation(d) | date: 'short' }}</strong>
-      </div>
-      <div>
-        <small>Depart</small>
-        <strong>{{ getSiteLabel(d.siteDepart, d.siteDepartId || d['site_depart_id']) }}</strong>
-      </div>
-      <div>
-        <small>Arrivee</small>
-        <strong>{{ getSiteLabel(d.siteArrivee, d.siteArriveeId || d['site_arrivee_id']) }}</strong>
-      </div>
-      <div>
-        <small>Camion</small>
-        <strong>{{ getCamionLabel(d) }}</strong>
-      </div>
-      <div>
-        <small>Fournisseur</small>
-        <strong>{{ getFournisseurLabel(d) }}</strong>
-      </div>
-      <div>
-        <small>Capacite</small>
-        <strong>{{ d.capacite || '-' }}</strong>
-      </div>
+    <div class="request-meta">
+      <span>▰ {{ getCamionLabel(d) }}</span><span>◉ {{ getFournisseurLabel(d) }}</span><span>◷ {{ getDateCreation(d) | date:'shortDate' }}</span><span *ngIf="d.capacite">↕ {{ d.capacite }}</span>
     </div>
-
-    <div class="line-review" *ngIf="d.lignes?.length">
-      <h4>Articles demandes</h4>
-      <div class="line-row" *ngFor="let ligne of d.lignes">
-        <span>{{ getLigneArticleLabel(ligne) }}</span>
-        <strong>{{ ligne.quantite }} {{ ligne.unite || ligne.article?.unit || '' }}</strong>
-        <em>{{ ligne.type }}</em>
-      </div>
+    <div class="line-review" *ngIf="d.lignes?.length"><span *ngFor="let ligne of d.lignes">{{ getLigneArticleLabel(ligne) }} · {{ ligne.quantite }} {{ ligne.unite || ligne.article?.unit || '' }}</span></div>
+    <div class="request-actions" *ngIf="isValidator && validationTab === 'pending' && (view === 'validation' || view === 'requests')">
+      <input type="text" aria-label="Motif de rejet" placeholder="Motif de rejet (facultatif)" [(ngModel)]="motifRejet[d.id]" />
+      <button type="button" class="reject-button" (click)="rejeter.emit(d.id)" [disabled]="processingDemandeId === d.id">Rejeter</button>
+      <button type="button" class="approve-button" (click)="valider.emit(d.id)" [disabled]="processingDemandeId === d.id">{{ processingDemandeId === d.id ? 'Traitement…' : 'Valider' }}</button>
     </div>
-
-    <div class="demande-details" *ngIf="role !== 'DEMANDEUR'">
-      <span *ngIf="d.libelle">Libelle: {{ d.libelle }}</span>
-      <span *ngIf="d.capacite">Capacite: {{ d.capacite }}</span>
-      <span *ngIf="d.typeTransaction || d['type_transaction']">
-        Type: {{ d.typeTransaction || d['type_transaction'] }}
-      </span>
-      <span *ngIf="getDateCreation(d)">
-        Date creation: {{ getDateCreation(d) | date: 'short' }}
-      </span>
-      <span *ngIf="(d.statut === 'VALIDE' || d.statut === 'REJETE') && (d.dateValidation || d['date_validation'])">
-        Date validation: {{ d.dateValidation || d['date_validation'] | date: 'short' }}
-      </span>
-      <span *ngIf="d.camion?.id || d.camionId || d['camion_id']">
-        Camion: {{ d.camion?.id || d.camionId || d['camion_id'] }}
-      </span>
-      <span *ngIf="d.demandeur?.id || d.demandeurId || d['demandeur_id']">
-        Demandeur: {{ d.demandeur?.id || d.demandeurId || d['demandeur_id'] }}
-      </span>
-      <span *ngIf="d.fournisseur?.nom || d.fournisseur?.id || d.fournisseurId || d['fournisseur_id']">
-        Fournisseur: {{ d.fournisseur?.nom || d.fournisseur?.id || d.fournisseurId || d['fournisseur_id'] }}
-      </span>
-      <span *ngIf="d.siteDepart?.libelle || d.siteDepart?.id || d.siteDepartId || d['site_depart_id']">
-        Depart: {{ d.siteDepart?.libelle || d.siteDepart?.id || d.siteDepartId || d['site_depart_id'] }}
-      </span>
-      <span *ngIf="d.siteArrivee?.libelle || d.siteArrivee?.id || d.siteArriveeId || d['site_arrivee_id']">
-        Arrivee: {{ d.siteArrivee?.libelle || d.siteArrivee?.id || d.siteArriveeId || d['site_arrivee_id'] }}
-      </span>
-    </div>
-
-    <div class="actions" *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'">
-      <button
-        type="button"
-        class="success"
-        (click)="valider.emit(d.id)"
-        [disabled]="processingDemandeId === d.id"
-      >
-        {{ processingDemandeId === d.id ? 'Traitement...' : 'Valider' }}
-      </button>
-      <input
-        type="text"
-        placeholder="Motif de rejet"
-        [(ngModel)]="motifRejet[d.id]"
-      />
-      <button
-        type="button"
-        class="danger"
-        (click)="rejeter.emit(d.id)"
-        [disabled]="processingDemandeId === d.id"
-      >
-        Rejeter
-      </button>
-    </div>
+    <p class="validator-note" *ngIf="(d.statut === 'VALIDE' || d.status === 'VALIDE')">Validée par {{ getValidateurLabel(d) || 'le validateur' }}</p>
+    <p class="validator-note reject-note" *ngIf="d.statut === 'REJETE' || d.status === 'REJETE'">Motif : {{ getMotifRejet(d) }}</p>
   </article>
-</div>
-
-<section id="demandes-validees" class="validator-panel treated-panel" *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'">
-  <div>
-    <p class="eyebrow">Demandes validees</p>
-    <h3>{{ demandesValidees.length }} demande{{ demandesValidees.length > 1 ? 's' : '' }} validee{{ demandesValidees.length > 1 ? 's' : '' }}</h3>
-  </div>
-  <span class="muted-inline" *ngIf="isLoadingTraitees">Chargement...</span>
 </section>
-
-<div *ngIf="(role === 'VALIDATEUR' || role === 'ADMIN') && !isLoadingTraitees && demandesValidees.length === 0" class="empty">
-  Aucune demande validee.
-</div>
-
-<div class="demandes-list treated-list" *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'">
-  <article class="demande-card treated-card" *ngFor="let d of demandesValidees">
-    <div class="demande-main">
-      <strong>Demande #{{ d.id }}</strong>
-      <span>{{ d.statut || d.status }}</span>
-    </div>
-
-    <div class="validator-grid">
-      <div>
-        <small>Demandeur</small>
-        <strong>{{ getDemandeurLabel(d) }}</strong>
-      </div>
-      <div>
-        <small>Creation</small>
-        <strong>{{ getDateCreation(d) | date: 'short' }}</strong>
-      </div>
-      <div>
-        <small>Validateur</small>
-        <strong>{{ getValidateurLabel(d) }}</strong>
-      </div>
-      <div>
-        <small>Traitement</small>
-        <strong>{{ d.dateValidation || d['date_validation'] | date: 'short' }}</strong>
-      </div>
-      <div>
-        <small>Depart</small>
-        <strong>{{ getSiteLabel(d.siteDepart, d.siteDepartId || d['site_depart_id']) }}</strong>
-      </div>
-      <div>
-        <small>Arrivee</small>
-        <strong>{{ getSiteLabel(d.siteArrivee, d.siteArriveeId || d['site_arrivee_id']) }}</strong>
-      </div>
-      <div>
-        <small>Capacite</small>
-        <strong>{{ d.capacite || '-' }}</strong>
-      </div>
-    </div>
-  </article>
-</div>
-
-<section id="demandes-rejetees" class="validator-panel treated-panel" *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'">
-  <div>
-    <p class="eyebrow">Demandes rejetees</p>
-    <h3>{{ demandesRejetees.length }} demande{{ demandesRejetees.length > 1 ? 's' : '' }} rejetee{{ demandesRejetees.length > 1 ? 's' : '' }}</h3>
-  </div>
-  <span class="muted-inline" *ngIf="isLoadingTraitees">Chargement...</span>
-</section>
-
-<div *ngIf="(role === 'VALIDATEUR' || role === 'ADMIN') && !isLoadingTraitees && demandesRejetees.length === 0" class="empty">
-  Aucune demande rejetee.
-</div>
-
-<div class="demandes-list treated-list" *ngIf="role === 'VALIDATEUR' || role === 'ADMIN'">
-  <article class="demande-card treated-card rejected-card" *ngFor="let d of demandesRejetees">
-    <div class="demande-main">
-      <strong>Demande #{{ d.id }}</strong>
-      <span>{{ d.statut || d.status }}</span>
-    </div>
-
-    <div class="validator-grid">
-      <div>
-        <small>Demandeur</small>
-        <strong>{{ getDemandeurLabel(d) }}</strong>
-      </div>
-      <div>
-        <small>Creation</small>
-        <strong>{{ getDateCreation(d) | date: 'short' }}</strong>
-      </div>
-      <div>
-        <small>Validateur</small>
-        <strong>{{ getValidateurLabel(d) }}</strong>
-      </div>
-      <div>
-        <small>Traitement</small>
-        <strong>{{ d.dateValidation || d['date_validation'] | date: 'short' }}</strong>
-      </div>
-      <div>
-        <small>Depart</small>
-        <strong>{{ getSiteLabel(d.siteDepart, d.siteDepartId || d['site_depart_id']) }}</strong>
-      </div>
-      <div>
-        <small>Arrivee</small>
-        <strong>{{ getSiteLabel(d.siteArrivee, d.siteArriveeId || d['site_arrivee_id']) }}</strong>
-      </div>
-      <div>
-        <small>Capacite</small>
-        <strong>{{ d.capacite || '-' }}</strong>
-      </div>
-      <div>
-        <small>Motif rejet</small>
-        <strong>{{ getMotifRejet(d) }}</strong>
-      </div>
-    </div>
-  </article>
-</div>

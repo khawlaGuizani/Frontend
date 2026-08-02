@@ -15,7 +15,7 @@ import { CamionListComponent } from './camion-list.component';
     <section class="workspace">
       <div class="section-title">
         <div><p class="eyebrow">Flotte</p><h2>Gestion des camions</h2></div>
-        <span class="count-pill">{{ camions.length }} camions</span>
+        <button class="secondary-button" type="button" (click)="loadCamions()">Actualiser</button>
       </div>
       <app-camion-form [camion]="camion" [typesCamion]="typesCamion" [selectedCamion]="selectedCamion" [isSubmitting]="isSubmitting" (save)="selectedCamion ? saveCamion() : addCamion()" (cancel)="cancelCamionEdit()"></app-camion-form>
       <app-camion-list [camions]="camions" (edit)="editCamion($event)" (remove)="deleteCamion($event)"></app-camion-list>

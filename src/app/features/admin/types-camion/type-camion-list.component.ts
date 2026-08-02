@@ -6,16 +6,33 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <section class="panel list-panel">
-      <div class="list-row" *ngFor="let t of typesCamion">
+    <section class="panel table-panel">
+      <div class="panel-head table-head">
         <div>
-          <strong>{{ t.libelle }}</strong>
-          <span>{{ t.capaciteMax || t.capacite_max }} - {{ t.description || '-' }}</span>
+          <h3>Liste des types de camion</h3>
+          <p>{{ typesCamion.length }} type(s) affiche(s)</p>
         </div>
-        <div class="action-row">
-          <button class="secondary-button" type="button" (click)="edit.emit(t)">Modifier</button>
-          <button class="danger-button" type="button" (click)="remove.emit(t.id)">Supprimer</button>
-        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Libelle</th><th>Capacite max</th><th>Description</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of typesCamion">
+              <td><strong>{{ t.libelle }}</strong></td>
+              <td>{{ t.capaciteMax || t.capacite_max }}</td>
+              <td>{{ t.description || '-' }}</td>
+              <td class="actions-cell">
+                <button class="secondary-button icon-action" type="button" (click)="edit.emit(t)">✎ <span>Modifier</span></button>
+                <button class="danger-button" type="button" (click)="remove.emit(t.id)">Supprimer</button>
+              </td>
+            </tr>
+            <tr *ngIf="typesCamion.length === 0">
+              <td colspan="4" class="empty-state">Aucun type de camion trouve.</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
   `

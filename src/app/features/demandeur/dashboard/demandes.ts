@@ -22,6 +22,7 @@ import { DemandeListComponent } from '../demande-list/demande-list.component';
   encapsulation: ViewEncapsulation.None
 })
 export class DemandesComponent implements OnInit, OnDestroy {
+  activeView: 'create' | 'requests' | 'validation' | 'history' = 'requests';
   demandes: any[] = [];
   demandesTraitees: any[] = [];
   demandesValidees: any[] = [];
@@ -71,14 +72,23 @@ export class DemandesComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.activeView = this.router.url.includes('/new-request')
+      ? 'create'
+      : this.router.url.includes('/validation')
+        ? 'validation'
+        : this.router.url.includes('/history')
+          ? 'history'
+          : 'requests';
     this.role = this.authService.getRole();
-    if (this.role === 'DEMANDEUR') {
+    if (this.role === 'DEMANDEUR' && this.activeView === 'create') {
       this.loadFormData();
       this.addLigne();
     } else if (this.role === 'VALIDATEUR' || this.role === 'ADMIN') {
       this.loadArticles();
     }
-    this.refreshDemandes();
+    if (this.activeView !== 'create') {
+      this.refreshDemandes();
+    }
   }
 
   ngOnDestroy(): void {
