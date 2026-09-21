@@ -17,7 +17,8 @@ RUN npm run build -- --configuration production
 # ============================================================================
 FROM nginx:1.27-alpine AS runtime
 
-RUN rm -rf /usr/share/nginx/html/* \
+RUN apk upgrade --no-cache \
+    && rm -rf /usr/share/nginx/html/* \
     && rm -f /etc/nginx/conf.d/default.conf
 
 COPY --from=build /build/dist/transport-frontend/browser /usr/share/nginx/html
