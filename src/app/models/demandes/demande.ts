@@ -9,15 +9,18 @@ export interface DemandeLigne {
   articleId: number | null;
   article?: Article;
   quantite: number;
-  type: LigneType;
+  type?: LigneType;
   unite?: string;
   commentaires?: string;
+  description?: string;
 }
 
 export interface Demande extends BaseEntity, TimestampedEntity {
   libelle: string;
   capacite: number;
   typeTransaction: TransactionType;
+  typeMouvement?: LigneType;
+  descriptionMouvement?: string;
   type_transaction?: TransactionType; // alias pour compatibilité API
 
   // Relations
@@ -60,6 +63,8 @@ export interface DemandePayload {
   libelle: string;
   capacite: number;
   typeTransaction: TransactionType;
+  typeMouvement: LigneType;
+  descriptionMouvement: string;
   siteDepartId?: number | null;
   siteArriveeId?: number | null;
   camionId?: number | null;

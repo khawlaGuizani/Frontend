@@ -235,7 +235,8 @@ label {
   font-weight: 700;
 }
 input,
-select {
+select,
+textarea {
   width: 100%;
   min-width: 0;
   border: 1px solid #d8e0eb;
@@ -248,7 +249,8 @@ select {
   transition: 0.18s;
 }
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
@@ -264,7 +266,7 @@ select:focus {
 }
 .ligne {
   display: grid;
-  grid-template-columns: 36px minmax(220px, 1fr) 120px 130px 42px;
+  grid-template-columns: 36px minmax(220px, 1fr) 120px 42px;
   gap: 10px;
   align-items: start;
   border: 1px solid #e7edf4;
@@ -307,6 +309,63 @@ select:focus {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
   gap: 15px;
+}
+.request-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+}
+.request-pagination > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.request-pagination button {
+  border: 1px solid #d8e0eb;
+  border-radius: 8px;
+  padding: 8px 11px;
+  background: #fff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+}
+.request-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.article-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+.article-pagination button {
+  display: grid;
+  min-width: 24px;
+  height: 24px;
+  place-items: center;
+  border: 1px solid #d8e0eb;
+  border-radius: 6px;
+  padding: 0 5px;
+  background: #fff;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+}
+.article-pagination button.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+.article-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 .demande-card {
   padding: 19px;
@@ -492,6 +551,13 @@ select:focus {
   }
   .form-actions {
     justify-content: stretch;
+  }
+  .request-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .request-pagination > div {
+    justify-content: space-between;
   }
   .submit-button {
     width: 100%;

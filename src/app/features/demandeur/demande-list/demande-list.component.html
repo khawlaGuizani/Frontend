@@ -1,8 +1,8 @@
 <section class="request-toolbar" *ngIf="isValidator && view !== 'requests'">
   <div class="request-tabs" role="tablist" aria-label="Statut des demandes">
-    <button type="button" [class.active]="validationTab === 'pending'" (click)="validationTab = 'pending'" role="tab">À valider <span>{{ demandes.length }}</span></button>
-    <button type="button" [class.active]="validationTab === 'approved'" (click)="validationTab = 'approved'" role="tab">Validées <span>{{ demandesValidees.length }}</span></button>
-    <button type="button" [class.active]="validationTab === 'rejected'" (click)="validationTab = 'rejected'" role="tab">Rejetées <span>{{ demandesRejetees.length }}</span></button>
+    <button type="button" [class.active]="validationTab === 'pending'" (click)="selectValidationTab('pending')" role="tab">À valider <span>{{ demandes.length }}</span></button>
+    <button type="button" [class.active]="validationTab === 'approved'" (click)="selectValidationTab('approved')" role="tab">Validées <span>{{ demandesValidees.length }}</span></button>
+    <button type="button" [class.active]="validationTab === 'rejected'" (click)="selectValidationTab('rejected')" role="tab">Rejetées <span>{{ demandesRejetees.length }}</span></button>
   </div>
 </section>
 
@@ -12,7 +12,7 @@
 </section>
 
 <section class="demandes-list" *ngIf="displayedDemandes.length">
-  <article class="demande-card modern-request-card" *ngFor="let d of displayedDemandes">
+  <article class="demande-card modern-request-card" *ngFor="let d of pagedDemandes">
     <div class="request-card-head">
       <div><p>Demande #{{ d.id }}</p><strong>{{ d.libelle || 'Transport interne' }}</strong></div>
       <span class="request-status" [class]="statusClass(d)">{{ d.statut || d.status || 'EN_ATTENTE' }}</span>
@@ -25,7 +25,33 @@
     <div class="request-meta">
       <span>▰ {{ getCamionLabel(d) }}</span><span>◉ {{ getFournisseurLabel(d) }}</span><span>◷ {{ getDateCreation(d) | date:'shortDate' }}</span><span *ngIf="d.capacite">↕ {{ d.capacite }}</span>
     </div>
-    <div class="line-review" *ngIf="d.lignes?.length"><span *ngFor="let ligne of d.lignes">{{ getLigneArticleLabel(ligne) }} · {{ ligne.quantite }} {{ ligne.unite || ligne.article?.unit || '' }}</span></div>
+    <div class="line-review" *ngIf="d.lignes?.length">
+      <span *ngFor="let ligne of getPagedArticles(d)">
+        {{ getLigneArticleLabel(ligne) }} · {{ ligne.quantite }} {{ ligne.unite || ligne.article?.unit || '' }}
+      </span>
+    </div>
+    <nav class="article-pagination" *ngIf="getArticleTotalPages(d) > 1" aria-label="Pagination des articles">
+      <button
+        type="button"
+        aria-label="Page précédente des articles"
+        (click)="setArticlePage(d, getArticlePage(d) - 1)"
+        [disabled]="getArticlePage(d) === 1"
+      >‹</button>
+        <button
+          type="button"
+          *ngFor="let page of getArticlePages(d)"
+          [class.active]="getArticlePage(d) === page"
+          [attr.aria-label]="'Page ' + page + ' des articles'"
+          [attr.aria-current]="getArticlePage(d) === page ? 'page' : null"
+          (click)="setArticlePage(d, page)"
+        >{{ page }}</button>
+      <button
+        type="button"
+        aria-label="Page suivante des articles"
+        (click)="setArticlePage(d, getArticlePage(d) + 1)"
+        [disabled]="getArticlePage(d) === getArticleTotalPages(d)"
+      >›</button>
+    </nav>
     <div class="request-actions" *ngIf="isValidator && validationTab === 'pending' && (view === 'validation' || view === 'requests')">
       <input type="text" aria-label="Motif de rejet" placeholder="Motif de rejet (facultatif)" [(ngModel)]="motifRejet[d.id]" />
       <button type="button" class="reject-button" (click)="rejeter.emit(d.id)" [disabled]="processingDemandeId === d.id">Rejeter</button>
@@ -35,3 +61,12 @@
     <p class="validator-note reject-note" *ngIf="d.statut === 'REJETE' || d.status === 'REJETE'">Motif : {{ getMotifRejet(d) }}</p>
   </article>
 </section>
+
+<nav class="request-pagination" *ngIf="displayedDemandes.length" aria-label="Pagination des demandes">
+  <span>{{ firstDisplayedIndex }}-{{ lastDisplayedIndex }} sur {{ displayedDemandes.length }}</span>
+  <div>
+    <button type="button" (click)="previousPage()" [disabled]="currentPage === 1">Précédent</button>
+    <strong>Page {{ currentPage }} / {{ totalPages }}</strong>
+    <button type="button" (click)="nextPage()" [disabled]="currentPage === totalPages">Suivant</button>
+  </div>
+</nav>

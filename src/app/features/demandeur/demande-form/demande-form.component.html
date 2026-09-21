@@ -4,7 +4,7 @@
       <p class="eyebrow">Nouvelle operation</p>
       <h3>Creer une demande</h3>
     </div>
-    <span class="form-progress">{{ lignes.length }}/{{ maxLignes }} lignes</span>
+    <span class="form-progress">{{ lignes.length }} ligne{{ lignes.length > 1 ? 's' : '' }}</span>
   </div>
 
   <div class="form-section">
@@ -12,7 +12,7 @@
       <span>1</span>
       <div>
         <h4>Informations generales</h4>
-        <p>Definis le trajet, le type et les ressources associees.</p>
+        <p>Definis le trajet, le mouvement et les ressources associees.</p>
       </div>
     </div>
 
@@ -74,6 +74,24 @@
           </option>
         </select>
       </label>
+
+      <label>
+      Type de mouvement
+        <select name="typeMouvement" [(ngModel)]="nouvelleDemande.typeMouvement">
+          <option value="SORTIE">SORTIE</option>
+          <option value="ENTREE">ENTREE</option>
+        </select>
+      </label>
+
+      <label class="wide-field">
+      Description du mouvement
+        <input
+          type="text"
+          name="descriptionMouvement"
+          placeholder="Décrivez le mouvement..."
+          [(ngModel)]="nouvelleDemande.descriptionMouvement"
+        />
+      </label>
     </div>
   </div>
 
@@ -86,7 +104,7 @@
           <p>Ajoute les articles et quantites a transporter.</p>
         </div>
       </div>
-      <button type="button" (click)="addLigne.emit()" [disabled]="lignes.length >= maxLignes">
+      <button type="button" (click)="addLigne.emit()">
         Ajouter ligne
       </button>
     </div>
@@ -113,16 +131,11 @@
       <input
         type="number"
         min="1"
-        [max]="ligne.type === 'SORTIE' ? getArticleStock(getSelectedArticle(ligne.articleId)) : null"
+        [max]="nouvelleDemande.typeMouvement === 'SORTIE' ? getArticleStock(getSelectedArticle(ligne.articleId)) : null"
         [name]="'quantite' + i"
         [(ngModel)]="ligne.quantite"
         (ngModelChange)="onLigneChange.emit(ligne)"
       />
-
-      <select [name]="'type' + i" [(ngModel)]="ligne.type" (ngModelChange)="onLigneChange.emit(ligne)">
-        <option value="SORTIE">SORTIE</option>
-        <option value="ENTREE">ENTREE</option>
-      </select>
 
       <button type="button" class="danger icon-button" (click)="removeLigne.emit(i)" *ngIf="lignes.length > 1">
         X

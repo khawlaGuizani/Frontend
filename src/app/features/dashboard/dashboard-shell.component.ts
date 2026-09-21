@@ -70,8 +70,8 @@ export class DashboardShellComponent implements OnInit {
     { label: 'Types camion', icon: '◇', link: '/dashboard/trucks', roles: ['ADMIN'] },
     { label: 'Camions', icon: '▰', link: '/dashboard/fleet', roles: ['ADMIN'] },
     { label: 'Fournisseurs', icon: '◉', link: '/dashboard/suppliers', roles: ['ADMIN'] },
-    { label: 'Sites', icon: '⌖', link: '/dashboard/sites', roles: ['ADMIN'] }
-  ];
+    { label: 'Sites', icon: '⌖', link: '/dashboard/sites', roles: ['ADMIN'] },
+    { label: 'Business Intelligence', icon: '▥', link: '/dashboard/bi', roles: ['ADMIN'] }  ];
 
   constructor(private readonly router: Router, private readonly auth: AuthService, private readonly host: ElementRef<HTMLElement>) {}
 

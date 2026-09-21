@@ -18,7 +18,7 @@ export class DemandeFormComponent {
   @Input() articles: any[] = [];
   @Input() nouvelleDemande: any = null;
   @Input() lignes: any[] = [];
-  @Input() maxLignes = 2;
+  @Input() maxLignes = Infinity;
   @Input() isCreating = false;
   @Input() getArticleLabel!: (article: any) => string;
   @Input() getSelectedArticle!: (articleId: any) => any;

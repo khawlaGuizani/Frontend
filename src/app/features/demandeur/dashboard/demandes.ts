@@ -38,7 +38,7 @@ export class DemandesComponent implements OnInit, OnDestroy {
   processingDemandeId: number | null = null;
   private loadingTimer: ReturnType<typeof setTimeout> | null = null;
   isCreating = false;
-  readonly maxLignes = 2;
+  readonly maxLignes = Infinity;
 
   sites: any[] = [];
   camions: any[] = [];
@@ -229,7 +229,7 @@ export class DemandesComponent implements OnInit, OnDestroy {
 
   onLigneChange(ligne: any): void {
     const article = this.getSelectedArticle(ligne.articleId);
-    if (!article || ligne.type !== 'SORTIE') {
+    if (!article || this.nouvelleDemande.typeMouvement !== 'SORTIE') {
       return;
     }
 
@@ -241,15 +241,9 @@ export class DemandesComponent implements OnInit, OnDestroy {
   }
 
   addLigne(): void {
-    if (this.lignes.length >= this.maxLignes) {
-      this.errorMessage = 'Tu peux ajouter au maximum deux articles par demande.';
-      return;
-    }
-
     this.lignes.push({
       articleId: null,
-      quantite: 1,
-      type: 'SORTIE'
+      quantite: 1
     });
   }
 
@@ -265,18 +259,38 @@ export class DemandesComponent implements OnInit, OnDestroy {
       !this.nouvelleDemande.libelle ||
       !this.nouvelleDemande.capacite ||
       !this.nouvelleDemande.siteDepartId ||
-      !this.nouvelleDemande.siteArriveeId
+      !this.nouvelleDemande.siteArriveeId ||
+      !this.nouvelleDemande.camionId ||
+      !this.nouvelleDemande.fournisseurId
     ) {
-      this.errorMessage = 'Merci de remplir libelle, capacite, site depart et site arrivee.';
+      this.errorMessage = 'Merci de remplir tous les champs obligatoires de la demande.';
       return;
     }
 
-    const lignesValides = this.lignes.filter((ligne) => ligne.articleId && ligne.quantite > 0);
-    if (lignesValides.length > this.maxLignes) {
-      this.errorMessage = 'Tu peux envoyer au maximum deux articles par demande.';
+    if (!['ENTREE', 'SORTIE'].includes(this.nouvelleDemande.typeMouvement)) {
+      this.errorMessage = 'Le type de mouvement est obligatoire.';
       return;
     }
 
+    if (!this.nouvelleDemande.descriptionMouvement?.trim()) {
+      this.errorMessage = 'La description du mouvement est obligatoire.';
+      return;
+    }
+
+    if (!this.lignes.length) {
+      this.errorMessage = 'Ajoutez au moins un article.';
+      return;
+    }
+
+    if (this.lignes.some((ligne) => !ligne.articleId || !Number.isInteger(Number(ligne.quantite)) || ligne.quantite <= 0)) {
+      this.errorMessage = 'Chaque article doit etre selectionne avec une quantite superieure a 0.';
+      return;
+    }
+
+    const lignesValides = this.lignes.map((ligne) => ({
+      articleId: ligne.articleId,
+      quantite: Number(ligne.quantite)
+    }));
     const stockError = this.getStockError(lignesValides);
     if (stockError) {
       this.errorMessage = stockError;
@@ -606,7 +620,7 @@ export class DemandesComponent implements OnInit, OnDestroy {
   private getStockError(lignes: any[]): string | null {
     for (const ligne of lignes) {
       const article = this.getSelectedArticle(ligne.articleId);
-      if (!article || ligne.type !== 'SORTIE') {
+      if (!article || this.nouvelleDemande.typeMouvement !== 'SORTIE') {
         continue;
       }
 
@@ -660,7 +674,9 @@ export class DemandesComponent implements OnInit, OnDestroy {
       siteDepartId: null,
       siteArriveeId: null,
       camionId: null,
-      fournisseurId: null
+      fournisseurId: null,
+      typeMouvement: 'SORTIE',
+      descriptionMouvement: ''
     };
   }
 }

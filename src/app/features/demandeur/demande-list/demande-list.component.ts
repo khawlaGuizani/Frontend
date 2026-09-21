@@ -35,6 +35,10 @@ export class DemandeListComponent implements OnChanges {
   @Output() refreshDemandes = new EventEmitter<void>();
 
   validationTab: 'pending' | 'approved' | 'rejected' = 'pending';
+  readonly pageSize = 6;
+  readonly articlePageSize = 3;
+  currentPage = 1;
+  articlePages: Record<string, number> = {};
 
   get displayedDemandes(): any[] {
     if (this.view === 'requests') return this.demandes;
@@ -45,8 +49,77 @@ export class DemandeListComponent implements OnChanges {
 
   get isValidator(): boolean { return this.role === 'VALIDATEUR' || this.role === 'ADMIN'; }
 
+  getArticlePageKey(demande: any): string {
+    return String(demande?.id ?? demande?.reference ?? 'unknown');
+  }
+
+  getArticlePage(demande: any): number {
+    const totalPages = this.getArticleTotalPages(demande);
+    const key = this.getArticlePageKey(demande);
+    const page = Math.min(this.articlePages[key] || 1, totalPages);
+    this.articlePages[key] = page;
+    return page;
+  }
+
+  getArticleTotalPages(demande: any): number {
+    return Math.max(1, Math.ceil((demande?.lignes?.length || 0) / this.articlePageSize));
+  }
+
+  getArticlePages(demande: any): number[] {
+    return Array.from({ length: this.getArticleTotalPages(demande) }, (_, index) => index + 1);
+  }
+
+  getPagedArticles(demande: any): any[] {
+    const page = this.getArticlePage(demande);
+    const start = (page - 1) * this.articlePageSize;
+    return (demande?.lignes || []).slice(start, start + this.articlePageSize);
+  }
+
+  setArticlePage(demande: any, page: number): void {
+    const totalPages = this.getArticleTotalPages(demande);
+    this.articlePages[this.getArticlePageKey(demande)] = Math.max(1, Math.min(page, totalPages));
+  }
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.displayedDemandes.length / this.pageSize));
+  }
+
+  get pagedDemandes(): any[] {
+    this.currentPage = Math.min(this.currentPage, this.totalPages);
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.displayedDemandes.slice(start, start + this.pageSize);
+  }
+
+  get firstDisplayedIndex(): number {
+    return this.displayedDemandes.length ? (this.currentPage - 1) * this.pageSize + 1 : 0;
+  }
+
+  get lastDisplayedIndex(): number {
+    return Math.min(this.currentPage * this.pageSize, this.displayedDemandes.length);
+  }
+
+  selectValidationTab(tab: 'pending' | 'approved' | 'rejected'): void {
+    this.validationTab = tab;
+    this.currentPage = 1;
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) this.currentPage--;
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) this.currentPage++;
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['view'] && this.view === 'history') this.validationTab = 'approved';
+    if (changes['view']) {
+      if (this.view === 'history') this.validationTab = 'approved';
+      this.currentPage = 1;
+    }
+
+    if (changes['demandes'] || changes['demandesValidees'] || changes['demandesRejetees']) {
+      this.currentPage = 1;
+    }
   }
 
   statusClass(demande: any): string {

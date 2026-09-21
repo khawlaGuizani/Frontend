@@ -11,6 +11,8 @@ import { TypeCamionManagementComponent } from './features/admin/types-camion/typ
 import { CamionManagementComponent } from './features/admin/camions/camion-management.component';
 import { FournisseurManagementComponent } from './features/admin/fournisseurs/fournisseur-management.component';
 import { SiteManagementComponent } from './features/admin/sites/site-management.component';
+import { BiComponent } from './features/admin/bi.component';
+
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -37,7 +39,8 @@ export const routes: Routes = [
       { path: 'trucks', component: TypeCamionManagementComponent, data: { title: 'Types de camion', roles: ['ADMIN'] } },
       { path: 'fleet', component: CamionManagementComponent, data: { title: 'Flotte de camions', roles: ['ADMIN'] } },
       { path: 'suppliers', component: FournisseurManagementComponent, data: { title: 'Fournisseurs', roles: ['ADMIN'] } },
-      { path: 'sites', component: SiteManagementComponent, data: { title: 'Sites logistiques', roles: ['ADMIN'] } }
+      { path: 'sites', component: SiteManagementComponent, data: { title: 'Sites logistiques', roles: ['ADMIN'] } },
+      { path: 'bi', component: BiComponent, data: { title: 'Business Intelligence', roles: ['ADMIN'] } }
     ]
   },
   { path: 'demandes', redirectTo: 'dashboard/requests', pathMatch: 'full' },
