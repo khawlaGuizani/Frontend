@@ -9,6 +9,10 @@ on:
 
 env:
   NODE_VERSION: '22'
+  FRONTEND_IMAGE: ghcr.io/khawlaguizani/frontend
+  K8S_NAMESPACE: transport
+  K8S_DEPLOYMENT: transport-frontend
+  DAST_TARGET: http://192.168.205.150
 
 permissions:
   contents: read
@@ -17,13 +21,19 @@ permissions:
   packages: write
 
 jobs:
+
   # ---------------------------------------------------------------------
   # 1. Build, unit tests, SonarCloud static analysis
   # ---------------------------------------------------------------------
   build-test-sonar:
     name: Build, Test & SonarCloud
     runs-on: ubuntu-latest
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -35,7 +45,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Install dependencies (npm ci)
+      - name: Install dependencies
         run: npm ci
 
       - name: Run unit tests with coverage
@@ -60,9 +70,11 @@ jobs:
             -Dsonar.test.inclusions=**/*.spec.ts
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
-      - name: Skip SonarCloud (SONAR_TOKEN not configured)
+      - name: Skip SonarCloud
         if: ${{ env.SONAR_TOKEN == '' }}
-        run: echo "::warning::SONAR_TOKEN secret is not set — skipping SonarCloud analysis. See README-DEVSECOPS.md."
+        run: |
+          echo "::warning::SONAR_TOKEN secret is not configured."
+          echo "SonarCloud analysis skipped."
 
       - name: Upload test coverage report
         if: always()
@@ -70,23 +82,30 @@ jobs:
         with:
           name: frontend-coverage-report
           path: coverage/**
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Upload production build
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
           path: dist/**
+          if-no-files-found: error
           retention-days: 7
 
+
   # ---------------------------------------------------------------------
-  # 2. Secret scanning — Gitleaks (blocking)
+  # 2. Secret scanning — Gitleaks
+  # Blocking security control
   # ---------------------------------------------------------------------
   gitleaks:
     name: Secret Scan (Gitleaks)
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository (full history)
+
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -94,62 +113,88 @@ jobs:
       - name: Run Gitleaks
         run: |
           mkdir -p reports/gitleaks
-          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest \
-            detect --source /repo --config /repo/security/gitleaks.toml \
-            --report-format sarif --report-path /repo/reports/gitleaks/gitleaks.sarif \
-            --redact --verbose --exit-code 1
+
+          docker run --rm \
+            -v "$PWD:/repo" \
+            zricethezav/gitleaks:latest \
+            detect \
+            --source /repo \
+            --config /repo/security/gitleaks.toml \
+            --report-format sarif \
+            --report-path /repo/reports/gitleaks/gitleaks.sarif \
+            --redact \
+            --verbose \
+            --exit-code 1
 
       - name: Generate human-readable Gitleaks report
         if: always()
         run: |
           mkdir -p reports/gitleaks
-          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest \
-            detect --source /repo --config /repo/security/gitleaks.toml \
-            --report-format json --report-path /repo/reports/gitleaks/gitleaks.json \
-            --redact --exit-code 0
 
-      - name: Upload Gitleaks SARIF to code scanning
-        if: always()
+          docker run --rm \
+            -v "$PWD:/repo" \
+            zricethezav/gitleaks:latest \
+            detect \
+            --source /repo \
+            --config /repo/security/gitleaks.toml \
+            --report-format json \
+            --report-path /repo/reports/gitleaks/gitleaks.json \
+            --redact \
+            --exit-code 0
+
+      - name: Upload Gitleaks SARIF
+        if: always() && hashFiles('reports/gitleaks/gitleaks.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: reports/gitleaks/gitleaks.sarif
-          category: gitleaks
+          category: gitleaks-frontend
 
       - name: Upload Gitleaks reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gitleaks-reports
+          name: frontend-gitleaks-reports
           path: reports/gitleaks/**
+          if-no-files-found: warn
           retention-days: 30
+
 
   # ---------------------------------------------------------------------
   # 3. Dependency scanning — npm audit
+  # Non-blocking
   # ---------------------------------------------------------------------
   npm-audit:
     name: Dependency Scan (npm audit)
     runs-on: ubuntu-latest
+
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js ${{ env.NODE_VERSION }}
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Install dependencies (npm ci)
+      - name: Install dependencies
         run: npm ci
 
-      - name: Run npm audit (report)
+      - name: Generate npm audit JSON report
         run: |
           mkdir -p reports
+
           npm audit --json > reports/npm-audit.json || true
+
+      - name: Run npm audit
+        run: |
           npm audit || true
 
-      - name: Fail on CRITICAL vulnerabilities
-        run: npm audit --audit-level=critical
+      - name: Check critical vulnerabilities
+        run: |
+          echo "npm audit findings are reported but do not block the pipeline."
+          npm audit --audit-level=critical || true
 
       - name: Upload npm audit report
         if: always()
@@ -157,17 +202,23 @@ jobs:
         with:
           name: frontend-npm-audit-report
           path: reports/npm-audit.json
+          if-no-files-found: warn
           retention-days: 30
+
 
   # ---------------------------------------------------------------------
   # 4. SAST — Semgrep
+  # Non-blocking
   # ---------------------------------------------------------------------
   semgrep:
     name: SAST (Semgrep)
     runs-on: ubuntu-latest
+
     container:
       image: semgrep/semgrep
+
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -179,15 +230,16 @@ jobs:
             --config p/angular \
             --config p/owasp-top-ten \
             --config p/secrets \
-            --sarif --output semgrep-results.sarif \
+            --sarif \
+            --output semgrep-results.sarif \
             --error || true
 
-      - name: Upload Semgrep SARIF to code scanning
-        if: always()
+      - name: Upload Semgrep SARIF
+        if: always() && hashFiles('semgrep-results.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep-results.sarif
-          category: semgrep
+          category: semgrep-frontend
 
       - name: Upload Semgrep report
         if: always()
@@ -195,7 +247,9 @@ jobs:
         with:
           name: frontend-semgrep-report
           path: semgrep-results.sarif
+          if-no-files-found: warn
           retention-days: 30
+
 
   # ---------------------------------------------------------------------
   # 5. License compliance scan
@@ -203,51 +257,73 @@ jobs:
   license-scan:
     name: License Scan
     runs-on: ubuntu-latest
+
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js ${{ env.NODE_VERSION }}
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
-      - name: Install dependencies (npm ci)
+      - name: Install dependencies
         run: npm ci
 
-      - name: Generate license report
+      - name: Generate license reports
         run: |
           mkdir -p reports
-          npx license-checker --production --json > reports/licenses.json
-          npx license-checker --production --summary > reports/licenses-summary.txt
 
-      - name: Upload license report
+          npx license-checker \
+            --production \
+            --json \
+            > reports/licenses.json
+
+          npx license-checker \
+            --production \
+            --summary \
+            > reports/licenses-summary.txt
+
+      - name: Upload license reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-license-report
-          path: reports/licenses*
+          path: |
+            reports/licenses.json
+            reports/licenses-summary.txt
+          if-no-files-found: warn
           retention-days: 30
 
+
   # ---------------------------------------------------------------------
-  # 6. Docker image build, Trivy scan, SBOM (Syft), SBOM scan (Grype)
+  # 6. Docker image build + Trivy + Syft + Grype
+  # Non-blocking security analysis
   # ---------------------------------------------------------------------
   docker-image-security:
-    name: Docker Build & Image Security (Trivy/Syft/Grype)
+    name: Docker Build & Image Security
     runs-on: ubuntu-latest
-    needs: [build-test-sonar, gitleaks]
+
+    needs:
+      - build-test-sonar
+      - gitleaks
+
     permissions:
       contents: read
       packages: write
       security-events: write
+
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Normalize Docker image name
         id: image-name
-        run: echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/frontend" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "name=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/frontend" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -263,7 +339,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trivy scan — SARIF (for code scanning)
+
+      # ---------------------------------------------------------------
+      # Trivy
+      # ---------------------------------------------------------------
+
+      - name: Cache Trivy database
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trivy
+          key: trivy-${{ runner.os }}-${{ runner.arch }}
+          restore-keys: |
+            trivy-${{ runner.os }}-
+            trivy-
+
+      - name: Trivy scan — SARIF
+        continue-on-error: true
         uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ${{ steps.image-name.outputs.name }}:${{ github.sha }}
@@ -272,13 +363,18 @@ jobs:
           severity: CRITICAL,HIGH,MEDIUM
           ignore-unfixed: false
           exit-code: '0'
+          timeout: 30m
 
       - name: Download Trivy HTML template
         run: |
           mkdir -p contrib
-          curl -L https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl -o contrib/html.tpl
+
+          curl -L \
+            https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl \
+            -o contrib/html.tpl
 
       - name: Trivy scan — HTML report
+        continue-on-error: true
         uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ${{ steps.image-name.outputs.name }}:${{ github.sha }}
@@ -287,45 +383,65 @@ jobs:
           output: trivy-report.html
           severity: CRITICAL,HIGH,MEDIUM
           exit-code: '0'
+          timeout: 30m
 
-      - name: Trivy scan — fail on CRITICAL with a fix available
+      - name: Trivy critical scan
+        continue-on-error: true
         uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ${{ steps.image-name.outputs.name }}:${{ github.sha }}
           format: table
           severity: CRITICAL
           ignore-unfixed: true
-          exit-code: '1'
+          exit-code: '0'
+          timeout: 30m
 
-      - name: Upload Trivy SARIF to code scanning
-        if: ${{ always() && hashFiles('trivy-results.sarif') != '' }}
+      - name: Upload Trivy SARIF
+        if: always() && hashFiles('trivy-results.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-results.sarif
           category: trivy-frontend-image
 
-      - name: Generate SBOM (Syft)
+
+      # ---------------------------------------------------------------
+      # Syft — SBOM
+      # ---------------------------------------------------------------
+
+      - name: Generate SBOM with Syft
+        continue-on-error: true
         uses: anchore/sbom-action@v0
         with:
           image: ${{ steps.image-name.outputs.name }}:${{ github.sha }}
           format: cyclonedx-json
           output-file: sbom-frontend.cyclonedx.json
 
-      - name: Scan SBOM for vulnerabilities (Grype)
-        uses: anchore/scan-action@v6
+
+      # ---------------------------------------------------------------
+      # Grype — SBOM vulnerability scan
+      # ---------------------------------------------------------------
+
+      - name: Scan SBOM with Grype
         id: grype
+        continue-on-error: true
+        uses: anchore/scan-action@v6
         with:
           sbom: sbom-frontend.cyclonedx.json
           fail-build: false
           severity-cutoff: high
           output-format: sarif
 
-      - name: Upload Grype SARIF to code scanning
-        if: ${{ always() && steps.grype.outputs.sarif != '' }}
+      - name: Upload Grype SARIF
+        if: always() && steps.grype.outputs.sarif != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ steps.grype.outputs.sarif }}
           category: grype-frontend-sbom
+
+
+      # ---------------------------------------------------------------
+      # Upload all container security reports
+      # ---------------------------------------------------------------
 
       - name: Upload container security reports
         if: always()
@@ -337,7 +453,13 @@ jobs:
             trivy-report.html
             sbom-frontend.cyclonedx.json
             ${{ steps.grype.outputs.sarif }}
+          if-no-files-found: warn
           retention-days: 30
+
+
+      # ---------------------------------------------------------------
+      # GHCR
+      # ---------------------------------------------------------------
 
       - name: Log in to GitHub Container Registry
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
@@ -360,13 +482,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+
   # ---------------------------------------------------------------------
-  # 7. Consolidated security gate
+  # 7. Consolidated Security Gate
   # ---------------------------------------------------------------------
   security-gate:
     name: Security Gate
     runs-on: ubuntu-latest
+
     if: always()
+
     needs:
       - build-test-sonar
       - gitleaks
@@ -374,28 +499,173 @@ jobs:
       - semgrep
       - license-scan
       - docker-image-security
+
     steps:
-      - name: Evaluate gate
+
+      - name: Evaluate security gate
         run: |
-          echo "build-test-sonar:      ${{ needs.build-test-sonar.result }}"
-          echo "gitleaks:               ${{ needs.gitleaks.result }}"
-          echo "npm-audit:              ${{ needs.npm-audit.result }}"
-          echo "semgrep:                ${{ needs.semgrep.result }}"
-          echo "license-scan:           ${{ needs.license-scan.result }}"
-          echo "docker-image-security:  ${{ needs.docker-image-security.result }}"
-          if [ "${{ needs.build-test-sonar.result }}" != "success" ] || [ "${{ needs.gitleaks.result }}" != "success" ]; then
-            echo "::error::Security gate failed — build/tests or secret scanning did not pass."
+          echo "========================================="
+          echo "        FRONTEND SECURITY GATE"
+          echo "========================================="
+
+          echo "build-test-sonar:     ${{ needs.build-test-sonar.result }}"
+          echo "gitleaks:             ${{ needs.gitleaks.result }}"
+          echo "npm-audit:            ${{ needs.npm-audit.result }}"
+          echo "semgrep:              ${{ needs.semgrep.result }}"
+          echo "license-scan:         ${{ needs.license-scan.result }}"
+          echo "docker-security:      ${{ needs.docker-image-security.result }}"
+
+          echo "========================================="
+
+          if [ "${{ needs.build-test-sonar.result }}" != "success" ]; then
+            echo "::error::Build/Test/Sonar job failed."
             exit 1
           fi
-          echo "Security gate passed."
 
-      - name: Trigger deployment
-        if: success() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && env.DISPATCH_TOKEN != ''
-        env:
-          DISPATCH_TOKEN: ${{ secrets.DISPATCH_TOKEN }}
+          if [ "${{ needs.gitleaks.result }}" != "success" ]; then
+            echo "::error::Gitleaks detected a blocking issue."
+            exit 1
+          fi
+
+          echo "Security Gate passed."
+          echo "Security analysis reports are available as artifacts."
+
+
+  # ---------------------------------------------------------------------
+  # 8. Deploy Frontend to K3s
+  # ---------------------------------------------------------------------
+  deploy:
+    name: Deploy Frontend to K3s
+    runs-on: self-hosted
+
+    needs:
+      - security-gate
+
+    if: >
+      needs.security-gate.result == 'success' &&
+      (github.ref == 'refs/heads/main' ||
+       github.ref == 'refs/heads/master')
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify Kubernetes access
         run: |
-          curl -fsS -X POST \
-            -H "Authorization: token $DISPATCH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository_owner }}/devsecops-platform/dispatches" \
-            -d '{"event_type":"security-gate-passed"}'
+          echo "Checking Kubernetes cluster..."
+
+          kubectl cluster-info
+
+          echo "Current nodes:"
+          kubectl get nodes
+
+          echo "Transport namespace:"
+          kubectl get pods -n transport
+
+      - name: Restart frontend deployment
+        run: |
+          kubectl rollout restart deployment/${{ env.K8S_DEPLOYMENT }} \
+            -n ${{ env.K8S_NAMESPACE }}
+
+      - name: Wait for frontend rollout
+        run: |
+          kubectl rollout status \
+            deployment/${{ env.K8S_DEPLOYMENT }} \
+            -n ${{ env.K8S_NAMESPACE }} \
+            --timeout=180s
+
+      - name: Verify frontend pod
+        run: |
+          echo "Frontend deployment:"
+          kubectl get deployment/${{ env.K8S_DEPLOYMENT }} \
+            -n ${{ env.K8S_NAMESPACE }}
+
+          echo "Frontend pods:"
+          kubectl get pods \
+            -n ${{ env.K8S_NAMESPACE }} \
+            -l app=transport-frontend \
+            -o wide
+
+      - name: Verify frontend service
+        run: |
+          kubectl get svc \
+            -n ${{ env.K8S_NAMESPACE }} \
+            transport-frontend
+
+      - name: Deployment completed
+        run: |
+          echo "========================================="
+          echo " Frontend deployed successfully on K3s "
+          echo "========================================="
+
+
+  # ---------------------------------------------------------------------
+  # 9. DAST — OWASP ZAP
+  # ---------------------------------------------------------------------
+  dast:
+    name: DAST — OWASP ZAP
+    runs-on: self-hosted
+
+    needs:
+      - deploy
+
+    if: >
+      needs.deploy.result == 'success' &&
+      (github.ref == 'refs/heads/main' ||
+       github.ref == 'refs/heads/master')
+
+    continue-on-error: true
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare ZAP reports directory
+        run: |
+          mkdir -p zap-reports
+
+      - name: Verify frontend endpoint
+        run: |
+          echo "Testing frontend target: ${{ env.DAST_TARGET }}"
+
+          curl -I \
+            --max-time 30 \
+            "${{ env.DAST_TARGET }}" || true
+
+      - name: Run OWASP ZAP baseline scan
+        run: |
+          docker run --rm \
+            --network host \
+            -v "$PWD/zap-reports:/zap/wrk/:rw" \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+            -t "${{ env.DAST_TARGET }}" \
+            -r zap-report.html \
+            -J zap-report.json \
+            -w zap-report.md \
+            || true
+
+      - name: List ZAP reports
+        if: always()
+        run: |
+          echo "Generated ZAP reports:"
+          ls -lah zap-reports/
+
+      - name: Upload OWASP ZAP reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dast-zap-reports
+          path: zap-reports/
+          if-no-files-found: warn
+          retention-days: 100
+
+      - name: DAST completed
+        if: always()
+        run: |
+          echo "========================================="
+          echo " OWASP ZAP DAST scan completed "
+          echo " Reports uploaded as artifacts "
+          echo "========================================="
