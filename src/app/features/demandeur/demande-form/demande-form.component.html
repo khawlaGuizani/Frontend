@@ -111,40 +111,54 @@
 
     <p *ngIf="formDataMessage" class="muted">{{ formDataMessage }}</p>
 
-    <div class="ligne" *ngFor="let ligne of lignes; let i = index">
-      <span class="line-index">{{ i + 1 }}</span>
+          <div class="ligne" *ngFor="let ligne of lignes; let i = index">
+        <span class="line-index">{{ i + 1 }}</span>
 
-      <select
-        [name]="'articleId' + i"
-        [(ngModel)]="ligne.articleId"
-        (ngModelChange)="onLigneChange.emit(ligne)"
-      >
-        <option [ngValue]="null">Article</option>
-        <option *ngIf="articles.length === 0" [ngValue]="null" disabled>
-          Aucun article charge
-        </option>
-        <option *ngFor="let article of articles" [ngValue]="article.id">
-          {{ getArticleLabel(article) }}
-        </option>
-      </select>
+        <label [for]="'articleId' + i">
+          Article
+          <select
+            [id]="'articleId' + i"
+            [name]="'articleId' + i"
+            [(ngModel)]="ligne.articleId"
+            (ngModelChange)="onLigneChange.emit(ligne)"
+          >
+            <option [ngValue]="null">Choisir un article</option>
+            <option *ngIf="articles.length === 0" [ngValue]="null" disabled>
+              Aucun article chargé
+            </option>
+            <option *ngFor="let article of articles" [ngValue]="article.id">
+              {{ getArticleLabel(article) }}
+            </option>
+          </select>
+        </label>
 
-      <input
-        type="number"
-        min="1"
-        [max]="nouvelleDemande.typeMouvement === 'SORTIE' ? getArticleStock(getSelectedArticle(ligne.articleId)) : null"
-        [name]="'quantite' + i"
-        [(ngModel)]="ligne.quantite"
-        (ngModelChange)="onLigneChange.emit(ligne)"
-      />
+        <label [for]="'quantite' + i">
+          Quantité
+          <input
+            [id]="'quantite' + i"
+            type="number"
+            min="1"
+            [max]="nouvelleDemande.typeMouvement === 'SORTIE' ? getArticleStock(getSelectedArticle(ligne.articleId)) : null"
+            [name]="'quantite' + i"
+            [(ngModel)]="ligne.quantite"
+            (ngModelChange)="onLigneChange.emit(ligne)"
+          />
+        </label>
 
-      <button type="button" class="danger icon-button" (click)="removeLigne.emit(i)" *ngIf="lignes.length > 1">
-        X
-      </button>
+        <button
+          type="button"
+          class="danger icon-button"
+          (click)="removeLigne.emit(i)"
+          *ngIf="lignes.length > 1"
+          [attr.aria-label]="'Supprimer la ligne ' + (i + 1)"
+        >
+          X
+        </button>
 
-      <small class="stock-info" *ngIf="getSelectedArticle(ligne.articleId) as article">
-        Disponible: {{ getArticleStock(article) }} {{ getArticleUnit(article) }}
-      </small>
-    </div>
+        <small class="stock-info" *ngIf="getSelectedArticle(ligne.articleId) as article">
+          Disponible : {{ getArticleStock(article) }} {{ getArticleUnit(article) }}
+        </small>
+      </div>
   </div>
 
   <div class="form-actions">
