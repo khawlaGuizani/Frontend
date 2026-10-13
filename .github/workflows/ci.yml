@@ -13,6 +13,8 @@ env:
   K8S_NAMESPACE: transport
   K8S_DEPLOYMENT: transport-frontend
   DAST_TARGET: http://192.168.205.150
+  # Générateur des rapports HTML (un rapport par job)
+  REPORT: python3 scripts/report_to_html.py
 
 permissions:
   contents: read
@@ -49,9 +51,10 @@ jobs:
         run: npm ci
 
       - name: Run unit tests with coverage
+        shell: bash
         env:
           CI: 'true'
-        run: npm test
+        run: npm test 2>&1 | tee test-output.log
 
       - name: Build production bundle
         run: npm run build -- --configuration production
@@ -85,6 +88,22 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: HTML report — Build & Test (Karma + couverture)
+        if: always()
+        run: |
+          mkdir -p html-report
+          $REPORT karma test-output.log html-report/build-test-report.html \
+            --lcov coverage/transport-frontend/lcov.info
+          [ -f coverage/transport-frontend/index.html ] && cp -r coverage/transport-frontend html-report/coverage || true
+
+      - name: Upload HTML report — Build & Test
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-1-build-test
+          path: html-report/
+          retention-days: 30
+
       - name: Upload production build
         if: success()
         uses: actions/upload-artifact@v4
@@ -115,6 +134,7 @@ jobs:
           mkdir -p reports/gitleaks
 
           docker run --rm \
+            --user "$(id -u):$(id -g)" \
             -v "$PWD:/repo" \
             zricethezav/gitleaks:latest \
             detect \
@@ -132,6 +152,7 @@ jobs:
           mkdir -p reports/gitleaks
 
           docker run --rm \
+            --user "$(id -u):$(id -g)" \
             -v "$PWD:/repo" \
             zricethezav/gitleaks:latest \
             detect \
@@ -156,6 +177,18 @@ jobs:
           name: frontend-gitleaks-reports
           path: reports/gitleaks/**
           if-no-files-found: warn
+          retention-days: 30
+
+      - name: HTML report — Gitleaks
+        if: always()
+        run: $REPORT gitleaks reports/gitleaks/gitleaks.json html-report/gitleaks-report.html
+
+      - name: Upload HTML report — Gitleaks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-2-gitleaks
+          path: html-report/
           retention-days: 30
 
 
@@ -205,6 +238,18 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+      - name: HTML report — npm audit
+        if: always()
+        run: $REPORT npm-audit reports/npm-audit.json html-report/npm-audit-report.html
+
+      - name: Upload HTML report — npm audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-3-npm-audit
+          path: html-report/
+          retention-days: 30
+
 
   # ---------------------------------------------------------------------
   # 4. SAST — Semgrep
@@ -248,6 +293,20 @@ jobs:
           name: frontend-semgrep-report
           path: semgrep-results.sarif
           if-no-files-found: warn
+          retention-days: 30
+
+      - name: HTML report — Semgrep
+        if: always()
+        run: |
+          python3 scripts/report_to_html.py sarif semgrep-results.sarif \
+            html-report/semgrep-report.html --title "Semgrep — SAST Report (Frontend)"
+
+      - name: Upload HTML report — Semgrep
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-4-semgrep
+          path: html-report/
           retention-days: 30
 
 
@@ -295,6 +354,18 @@ jobs:
             reports/licenses.json
             reports/licenses-summary.txt
           if-no-files-found: warn
+          retention-days: 30
+
+      - name: HTML report — Licenses
+        if: always()
+        run: $REPORT license-checker reports/licenses.json html-report/license-report.html
+
+      - name: Upload HTML report — Licenses
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-5-licenses
+          path: html-report/
           retention-days: 30
 
 
@@ -412,7 +483,7 @@ jobs:
         continue-on-error: true
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ steps.image-name.outputs.name }}:${{ github.sha }}
+          image: ${{ steps.image-name.outputs.name}}:${{ github.sha }}
           format: cyclonedx-json
           output-file: sbom-frontend.cyclonedx.json
 
@@ -454,6 +525,23 @@ jobs:
             sbom-frontend.cyclonedx.json
             ${{ steps.grype.outputs.sarif }}
           if-no-files-found: warn
+          retention-days: 30
+
+      - name: HTML report — Image security
+        if: always()
+        run: |
+          mkdir -p html-report
+          cp trivy-report.html html-report/trivy-report.html 2>/dev/null || true
+          $REPORT cyclonedx sbom-frontend.cyclonedx.json html-report/sbom-report.html
+          $REPORT sarif "${{ steps.grype.outputs.sarif }}" html-report/grype-report.html \
+            --title "Grype — Image Vulnerability Report (Frontend)"
+
+      - name: Upload HTML report — Image security
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-6-image-security
+          path: html-report/
           retention-days: 30
 
 
@@ -501,6 +589,25 @@ jobs:
       - docker-image-security
 
     steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: HTML report — Security Gate
+        if: always()
+        run: |
+          $REPORT gate - html-report/security-gate-report.html \
+            --title "Security Gate Report (Frontend)" \
+            --blocking "Build & Test;Gitleaks" \
+            --results "Build & Test=${{ needs.build-test-sonar.result }},Gitleaks=${{ needs.gitleaks.result }},npm audit=${{ needs.npm-audit.result }},Semgrep=${{ needs.semgrep.result }},License Scan=${{ needs.license-scan.result }},Docker Image Security=${{ needs.docker-image-security.result }}"
+
+      - name: Upload HTML report — Security Gate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-7-security-gate
+          path: html-report/
+          retention-days: 30
 
       - name: Evaluate security gate
         run: |
@@ -596,8 +703,29 @@ jobs:
       - name: Deployment completed
         run: |
           echo "========================================="
-          echo " Frontend deployed successfully on K3s "
+          echo " Frontend deployed successfully onK3s "
           echo "========================================="
+
+      - name: HTML report — Deploy K3s
+        if: always()
+        run: |
+          {
+            echo "=== Rollout ${{ env.K8S_DEPLOYMENT }} ==="
+            kubectl rollout status deployment/${{ env.K8S_DEPLOYMENT }} -n ${{ env.K8S_NAMESPACE }} --timeout=10s
+            echo; echo "=== Historique ==="
+            kubectl rollout history deployment/${{ env.K8S_DEPLOYMENT }} -n ${{ env.K8S_NAMESPACE }}
+            echo; echo "=== Pods / Services ==="
+            kubectl get deploy,pods,svc -n ${{ env.K8S_NAMESPACE }} -o wide
+          } > deploy.log 2>&1 || true
+          $REPORT text deploy.log html-report/deploy-report.html --title "Deploy Frontend to K3s Report"
+
+      - name: Upload HTML report — Deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-8-deploy
+          path: html-report/
+          retention-days: 30
 
 
   # ---------------------------------------------------------------------
@@ -662,6 +790,14 @@ jobs:
           if-no-files-found: warn
           retention-days: 100
 
+      - name: Upload HTML report — ZAP
+        if: always() && hashFiles('zap-reports/zap-report.html') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report-9-dast-zap
+          path: zap-reports/zap-report.html
+          retention-days: 100
+
       - name: DAST completed
         if: always()
         run: |
@@ -669,3 +805,47 @@ jobs:
           echo " OWASP ZAP DAST scan completed "
           echo " Reports uploaded as artifacts "
           echo "========================================="
+
+
+  # ---------------------------------------------------------------------
+  # 10. Rapport global — tous les rapports HTML + index.html
+  # ---------------------------------------------------------------------
+  pipeline-reports:
+    name: Pipeline HTML Reports
+    runs-on: ubuntu-latest
+
+    if: always()
+
+    needs:
+      - build-test-sonar
+      - gitleaks
+      - npm-audit
+      - semgrep
+      - license-scan
+      - docker-image-security
+      - security-gate
+      - deploy
+      - dast
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all HTML reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: html-report-*
+          path: pipeline-reports/
+
+      - name: Build index.html
+        run: |
+          $REPORT index pipeline-reports pipeline-reports/index.html \
+            --title "TransitFlow Frontend — Rapports de la pipeline #${{ github.run_number }}"
+
+      - name: Upload all HTML reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-html-reports
+          path: pipeline-reports/
+          retention-days: 100
